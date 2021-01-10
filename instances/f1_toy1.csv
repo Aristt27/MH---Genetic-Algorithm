@@ -1,0 +1,13 @@
+Cirurgia (c),Prioridade (p),Dias de espera (w),Especialidade (e),Cirurgião (g),Duração (tc)
+1,1,1,1,1,5
+2,1,1,1,1,13
+3,1,1,1,2,8
+4,1,1,1,2,11
+5,2,10,2,3,10
+6,3,9,2,4,14
+7,2,8,2,3,11
+8,3,5,2,4,5
+# Toy 1,,,,,
+# 8 cirurgias,,,,,
+# 3 prioridades: 1 2 e 3,,,,,
+# 4 cirurgiões 2 cirurgias cada.,,,,,

@@ -1,0 +1,21 @@
+Cirurgia (c),Prioridade (p),Dias_espera (w),Especialidade (e),Cirurgião (h),Duração (tc)
+1,1,1,1,1,7
+2,1,1,2,2,6
+3,1,1,2,3,6
+4,1,1,1,4,2
+5,1,1,2,5,2
+6,1,1,2,6,13
+7,3,52,1,6,11
+8,4,95,2,2,2
+9,2,5,1,3,12
+10,4,243,1,5,8
+11,4,17,1,2,5
+12,2,11,1,3,12
+13,4,310,2,6,10
+14,4,231,2,5,6
+15,4,179,2,1,4
+# randomFit_r2_s15_t8-4,,,,,
+# RandomFit: Escala três urgências para cada sala,,,,,
+# 2 salas. 15 cirurgias (6 urgencias),,,,,
+# Duração das cirurgias segundo distribuição normal com media 8 e desvio 4 (minimo e 2 e maximo 22),,,,,
+# Todas as cirurgias de prioridade 1 cabem no dia 1,,,,,

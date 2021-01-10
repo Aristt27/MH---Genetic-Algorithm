@@ -1,0 +1,14 @@
+Cirurgia (c),Prioridade (p),Dias de espera (w),Especialidade (e),Cirurgião (g),Duração (tc)
+1,1,1,1,1,5
+2,1,1,1,1,13
+3,1,1,1,1,8
+4,1,1,1,1,11
+5,2,10,2,2,10
+6,3,9,2,2,14
+7,2,8,2,2,11
+8,3,5,2,2,5
+# Toy2,,,,,
+# 8 cirurgias,,,,,
+# 3 prioridades: 1 2 e 3,,,,,
+# 2 cirurgiões. 4 cirurgias cada.,,,,,
+# Inviabilidade: Não há como o cirurgião 1 resolver todas as urgências na segunda,,,,,
