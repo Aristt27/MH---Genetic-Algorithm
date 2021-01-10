@@ -18,6 +18,8 @@ def instancia_csv(FileName, verbose = True):
       else:
         if row[0][0] != "#":
           aux.append(row) 
+        else:
+            print(row[0])
       i += 1
     for m in aux:
       aux2 = []

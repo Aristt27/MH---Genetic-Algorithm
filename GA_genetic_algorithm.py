@@ -19,7 +19,7 @@ def get_horariomax(Data):
   return 46//t
 
 
-def fitness(X, Data, F_obj, verbose = False):
+def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
 
   """ Aplica a função objetivo e tambem penaliza X caso ocorra o seguinte:
   
@@ -27,70 +27,110 @@ def fitness(X, Data, F_obj, verbose = False):
   - Sobreposição de horários;
   - Salas sendo usadas pra multiplas especialidades;
   - Cirurgião em mais de uma cirurgia ao mesmo tempo;
+  
+  Data = (Data, Max_Rooms)
 
   Começando dando uma penalização de 10% da F_obj para cada uma das infrações (dualizando as restrições)
 
   A FAZER: 
-  - Inserir penalização para cirurgião em dois lugares ao mesmo tempo
-  - Inserir uma maior penalização para cirurgias no mesmo dia (quanto mais ultrapassa do limite, mais penaliza)
+  - Inserir penalização para cirurgião em dois lugares ao mesmo tempo(Help)
+  - Inserir uma maior penalização para cirurgias no mesmo dia (quanto mais ultrapassa do limite, mais penaliza)(Feito)
   """
 
-  x_val = F_obj(X, Data)
+  penalty1     = 0 # Salas com mais de 46 intervalos
+  penalty2     = 0 # Salas com mais de um tipo de cirurgia
+  penalty3     = 0 # Cirurgiao em mais de um lugar, ao mesmo tempo, hmmm
 
-  penalty1     = 0
-  penalty2     = 0
+        
+  Maximum_day  = len(X)
+  Maximum_docs = Maximum_day
+
+  Data, Max_Rooms = Instance 
+
+  Dias_pen_12        = [[[] for j in range(Max_Rooms)] for i in range(Maximum_day)]
+  Docs_pen_3         = [[[] for j in range(Maximum_day)] for i in range(Maximum_docs)]     
+
   max_days      = 0
-  max_rooms     = 0
+  max_medicos   = 0
+
   time_interval = 2
-  blocos        = []
-  ans           = []
 
   for idx, cirurgia in enumerate(X):
 
-    cirurgia_dia  = cirurgia[0]
-    cirurgia_sala = cirurgia[1]
+    cirurgia_dia           = cirurgia[0]
+    cirurgia_sala          = cirurgia[1]
 
     if cirurgia_dia > max_days:
 
       max_days = cirurgia_dia
     
-    if cirurgia_sala > max_rooms:
+    if cirurgia_sala > Max_Rooms:
 
-      max_rooms = cirurgia_sala
+      Max_Rooms = cirurgia_sala
+    
+    cirurgia_medico        = Data[idx][4]
+    
+    if cirurgia_medico > max_medicos:
+        
+      max_medicos = cirurgia_medico
 
+    cirurgia_especialidade = Data[idx][3]
+    cirurgia_duracao       = Data[idx][-1] + time_interval
+    
+    
+    Dias_pen_12[cirurgia_dia - 1][cirurgia_sala - 1]      += [[cirurgia_especialidade, cirurgia_duracao]]  
+    Docs_pen_3[cirurgia_medico - 1][cirurgia_dia - 1]     += [cirurgia_duracao]
 
-    duration   = Data[idx][-1] + time_interval   # a ultima entrada de data[idx] possui a duracao da cirurgia e ela é acrescida do intervalo entre as cirurgias.
-    especialidade = Data[idx][3]
+  
+  Dias_pen_12 = Dias_pen_12[:max_days]
+  Docs_pen_3  = Docs_pen_3[:max_medicos]
 
-    blocos.append([cirurgia_dia, cirurgia_sala, duration, especialidade])
+  for dia in Dias_pen_12:  # Aqui eu penalizo por 1 e 2
+    
+    for room in dia:  # Temos que checar pra cada sala se ela respeita a especialidade [0] e o horario
+    
+      C = room
+      C = np.array(C).T
+      
+      if len(C) > 0:
+        if all_equal(C[0]) == False: # Especialidades
+          penalty2 = 1
+    
+        pen_1_weight = 48 - sum(C[1])
+    
+        if pen_1_weight < 0:    # Horário
+          penalty1 += -pen_1_weight
+        
+  for doc in Docs_pen_3:
+    
+    doc = doc[:max_days]
+    
+    for diazinho in doc:
+      pen_3_weight = 48 - sum(diazinho)
+        
+      if pen_3_weight < 0:
+        
+        penalty3 += -pen_3_weight
+          
+    
+  if penalty_check == True:
+        
+    if verbose == True:
+            
+      if penalty1:
+        print(" Essa solução não respeita a restrição que o dia só tem 24h e ultrapassa por " + str(penalty1))
+                
+      if penalty2:
+        print("Essa solução não respeita a restrição que uma sala só pode ser usada para uma especialidade")
 
-
-  for day in range(max_days):
-    diax = []
-    for room in range(max_rooms):
-      roomx = []
-      for bloco in blocos:
-        if bloco[0] == day+1:
-          if bloco[1] == room+1:
-            roomx += [[bloco[2], bloco[3]]]   #eu coloco a duração e a especialidade de cada cirurgia na sala
-
-      roomx = np.array(roomx)  
-      roomx = roomx.T
-      if len(roomx) != 0 :
-        pen_1_weight =  48 - sum(roomx[0])  #aqui eu verifico se o horario está maior que o limite
-        if pen_1_weight < 0:
-          penalty1 = -pen_1_weight
-        if all_equal(roomx[1]) == False:  #aqui eu verifico se ela possui sómente cirurgias de mesma especialidade
-         penalty2 = 1
-
-        diax += [roomx]
-
-    ans.append(diax)
-
-  if verbose == True:
-    print(ans)
-
-  return x_val*(1+ ((penalty1**2) + penalty2)*(50)) 
+      if penalty3:
+        print("Essa solução possui uma disposição impossivel para algum cirurgião")
+        
+      return penalty1, penalty2, penalty3
+    
+  x_val = F_obj(X, Data)
+    
+  return x_val*(1+ ((penalty1**2) + (penalty3**2)+ penalty2)*(16)) 
 
 
 def crossover(ancestors, α, cut_type = "ONE_CUT"):
@@ -201,8 +241,7 @@ def offspringer(recombinant_ancestors, children):
 
   return offspring
 
-
-def mutation(offspring,β,ϵ):
+def mutation(offspring,Max_Rooms,β):
     
     'Ocurrs a random mutation in a random collection of genes of different cells over a given offspring ~ what is ϵ?'
     """Para cada unidade em offsprig, existe uma probabilidade $\beta$ para ocorrer 1 troca entre seus genes. 
@@ -210,51 +249,72 @@ def mutation(offspring,β,ϵ):
      
      Isso ta uma loucura. 
      
+     Com probabilidade β ele escolhe o filho para mutar
+     
      """
     
     mutated_offspring = []
     
-    for chromossomes in offspring:
+    for child in offspring:
         
-        if np.random.rand(1) < β:
-            
-            if np.random.rand(1) > 0.5:  # se ele tirar coroa, ele shifta dia ou sala
-              
-                for gene in chromossomes:
-
-                    if np.random.rand(1) < ϵ:
-                        new_gene = []
-
-                        for c in gene:
-
-                            new_gene += []
-            
-            else: # se ele tirar cara, ele da uma bagunçada nas cirurgias, perturbando um pouco
-               
-                altered_genes = []
+        altered_child = []
+        
+        if np.random.rand(1) < β: ## Caso ele ganhe de β, ele vai ser mutado.
                 
-                for idxs, gene in enumerate(chromossomes):
+            for idxs, gene in enumerate(child):
+                
+                altered_gene = []
+                
+                for idx, g in enumerate(gene):
                     
-                    if np.random.rand(1) < ϵ:
+                    q = np.random.rand(1)
+                    
+                    if q < 0.3:
                         
-                        altered_idx += [idx]
-                        altered_chromossomes = []
-                altered_len = len(altered_genes)
+                        if idx == 1:
+                            
+                            if g > 1:
+                                mg = max(1, g + 2*np.random.randint(0,2) - 1)
+                                altered_gene += [min(mg, Max_Rooms)]
+                            if g == 1:
+                                altered_gene += [min(2, Max_Rooms)]
+                        else:
+                            if g > 1:
+                                altered_gene += [max(1, g + 2*np.random.randint(0,2) - 1)]
+                            if g == 1:
+                                altered_gene += [2]
+                    else:
+                        
+                        altered_gene +=[g]
                 
-                if altered_len > 0:
-                    
-                    genes = genes[:altered_len]+altered
-                mutated offspring += [altered_genes]
+                altered_child += [altered_gene]
+                
+            mutated_offspring += [altered_child]
                         
         else:
-            
-            mutated_offspring += [chromossomes]
+    
+            mutated_offspring += [child]  # Se ele perder de β, ele não vai ser mutado.
     
     return mutated_offspring
 
 
-    ## Queremos fornecer como entrada apenas Toy2(Data) e alguns outros parametros chatos para obter de saída X e X_bd (com a melhor fitness encontrado)
+def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
+    
+    elite           = [idx[1] for idx in fit_idx_vector[-elite_cut:]]
+    sortudos        = []
+    Max_Sortudo     = len(fit_idx_vector) - elite_cut
+    
+    
+    fit_idx_vector = fit_idx_vector[:-elite_cut] 
+    for i in range(n_sortudos):
+        
+        sortudo_idx = np.random.randint(Max_Sortudo)
+        sortudos += [fit_idx_vector[sortudo_idx][1]]
 
+        fit_idx_vector = fit_idx_vector[:sortudo_idx] + fit_idx_vector[sortudo_idx+1:]
+        Max_Sortudo -= 1
+    
+    return sortudos+elite
 
 def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
 
@@ -262,7 +322,7 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
       f_obj será utilizada como fitness provavelmente, e possui entradas:  [Cirurgias, Data, PenaltyTable]
       params são os parãmetros do algoritimo genético:  params = [\alpha,...?] 
       
-      Ss = Numero de salas vem de onde??  (Razoavel supor que o máximo é o numero de  especialidades? acho que nao)
+      Max_Rooms = Numero de salas vem de onde??  (Razoavel supor que o máximo é o numero de  especialidades? acho que nao)
 
 
       Lembrete que Data é a matriz na forma:
@@ -276,38 +336,29 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, gen_cut, LimitDay, Ss, generations, α, children = params  # params assessment  (Ss é o número de salas).
+  pop_inicial, elite_cut, n_sortudos, LimitDay, Max_Rooms, generations, α, children, β = params  # params assessment  (Max_Rooms é o número de salas).
 
+
+  Instance   = (Data, Max_Rooms)
+    
   Cs         = len(Data)
   HorarioMax = get_horariomax(Data)
 
   fit_idx_vector = []
 
-  #Aqui vamos agrupar as cirurgias de mesmas especialidades:
-  # Especialidades = []
-
-  # for j in range(100): #Até a especialidade máxima
-  #   Escpecialidadej = []
-  #   for C in Data:
-  #     if C[3] == j:
-  #       Especialidades.append(Especialidadej)
-    
-  #   if Especialidadej == []:
-  #     print(j)
-  #     break
   
   for i in range(pop_inicial):
     # Aqui vamos sortear um dia, uma sala e um horário para cada cirurgia. Primeiro vamos sortear um dia para cada cirurgia
     Max_Days = np.random.randint(2,LimitDay)
 
-    Xi  = [[np.random.randint(1,Max_Days), np.random.randint(1, Ss+1), np.random.randint(1,HorarioMax+1)] for j in range(Cs)]
+    Xi  = [[np.random.randint(1,Max_Days), np.random.randint(1, Max_Rooms+1), np.random.randint(1,HorarioMax+1)] for j in range(Cs)]
 
 
     # Falta verificarmos as salas bem como horários sobrepostos (acho que podemos colocar isso na função fitness, penalizando exponencialmente caso isso aconteça)
 
     # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
 
-    fit_idx_vector += [[fitness(Xi, Data, F_obj), Xi]]
+    fit_idx_vector += [[fitness(Xi, Instance, F_obj), Xi]]
 
   if Verbose == True:
     print("A população inicial é de " +str(pop_inicial))
@@ -320,13 +371,13 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
 
   fit_idx_vector.sort(reverse = True)
 
-  ancestors = [idx[1] for idx in fit_idx_vector[-gen_cut:]]
+  ancestors = select_ancestors(fit_idx_vector, elite_cut, n_sortudos)
 
-  if Verbose:
-    print("Ou seja, teremos como os ancestrais(High Scores) os seguintes, tendo em vista que gen_cut = " + str(gen_cut))
+  if Verbose == "Strong":
+    print("Ou seja, teremos como os ancestrais(High Scores) os seguintes, tendo em vista que elite_cut = " + str(elite_cut + n_sortudos))
     print(" ")
     for ancestor in ancestors:
-      print(ancestor, fitness(ancestor, Data, F_obj), F_obj(ancestor, Data))
+      print(ancestor, fitness(ancestor, Instance, F_obj), F_obj(ancestor, Data))
     print(" ")
 
   evolution = [ancestors]
@@ -343,26 +394,29 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
   ## Dado tudo isso, Geramos um conjunto inicial de tamanho pop_inicial onde cada individui é um X com uma ordem aleatoria distribuida uniformemente sobre as soluções viáveis (toda sol é viáve?)
 
   ## A partir dessa população, calculamos a fitness em todo mundo (uma modificacao da f_obj para rodar mais rapido provavlemente)
-  ## Otimizamos nessa f_obj e geramos novas populações.
-
-  ## Discussão sobre Crossing-over e Mutação na solução e alguns testes são importantes. 
 
   ## O maxdays das proximas geraação é o 2*soft_max das melhores soluções+k (k = 2 algo asssim) desse mdo
   ## ele tende a manter um número perto de dias decidido pelo negocio  anterior, visto que a média vai cair
   ## perto da solucao anterior.
 
   K = 0
+    
+  evolution = []
 
   for generation in range(generations):
+        
+      if Verbose == True:
+        
+          print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations))
 
       recombinant_ancestors = crossover(ancestors,α)
       
-      if  Verbose == True and K <= 2:
+      if  Verbose == "Strong" and K <= 2:
         print(" ")
         print(" Aqui vai os ancestrais modificados")
         print(" ")
         for rac in recombinant_ancestors:
-          print(rac,fitness(rac, Data, F_obj), F_obj(rac, Data))
+          print(rac,fitness(rac, Instance, F_obj), F_obj(rac, Data))
 
         K = 2
 
@@ -370,30 +424,26 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
       offspring  = offspringer(recombinant_ancestors,children)
 
 
-      if Verbose == True and K <= 2:
+      if Verbose == "Strong" and K <= 2:
 
         print(" ")
         print("Se prepara pra ver os filhotes")
         print(" ")
         for child in offspring:
-          print(child, fitness(child, Data, F_obj), F_obj(child, Data))
+          print(child, fitness(child, Instance, F_obj), F_obj(child, Data))
 
         print(" ")
-        print(" é isto imrão ") 
+        print(" Preparando o Elemento X para as mutações ") 
         
-      #mutated_offspring     = mutation(offspring,β,ϵ)
+      mutated_offspring     = mutation(offspring, Max_Rooms,β)
         
-  #       fit_idx_vector = [[fitness(xs,ws),i]for xs,i in zip(mutated_offspring,range(population))]
-  #       fit_idx_vector.sort()
-  #       ancestors  = [mutated_offspring[idx[1]] for idx in fit_idx_vector[-gen_cut:]]
+      fit_idx_vector = [[fitness(Xi, Instance, F_obj), Xi] for Xi in mutated_offspring]
+      fit_idx_vector.sort(reverse = True)
+      ancestors      = select_ancestors(fit_idx_vector, elite_cut, n_sortudos)
         
-  #       evolution.append(ancestors)
-  #   evolved = evolution[-1]
-
+      evolution.append(ancestors)
 
   ## COmo criterio de parada podemos verificar o quanto a média da geração está melhorando.
   ## Ou entao o max da solucao (algo em funçao dos dois seria melhor ainda).
 
-
-
-  return 0
+  return evolution
