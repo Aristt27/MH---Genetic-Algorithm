@@ -66,20 +66,21 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
 
       objective += (10*(w_c + 2))**(d_p) 
     
-    elif d_p == False: # Caso a cirurgia não tenha sido marcada
+    if d_p == False: # Caso a cirurgia não tenha sido marcada
 
       objective += (xi_p)*((w_c + 7))**2 
       
-      if d_p > l_p:
+      if d_p + w_c > l_p: #Caso a cirurgia tenha vencido
         
         objective += (xi_p)*(w_c + 9 - l_p)**2 
 
-    elif d_p <= l_p:
+    if True: #Caso a cirurgia tenha sido marcada
 
       objective += (w_c + 2 + d_p)**2
                     
-    elif d_p > l_p:  #Caso a cirurgia estiver vencida
+      if d_p + w_c > l_p:  #Caso a cirurgia estiver vencida
 
-      objective += (w_c + 2 + d_p - l_p)**2
+        objective += (w_c + 2 + d_p - l_p)**2
 
   return objective
+  
