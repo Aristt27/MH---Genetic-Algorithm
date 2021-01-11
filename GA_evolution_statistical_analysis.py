@@ -6,7 +6,7 @@ import numpy as np
 import seaborn as sb
 import pandas as pd
 
-def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mode = "Default", Verbose = True):
+def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mode = "Default", Verbose = True, plots = True):
     """ Matplots a evolução.
     
     
@@ -19,6 +19,9 @@ def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mo
     Generations = len(Evolution)
     Population  = len(Evolution[0])
     
+    print(" ")
+    print(" O Algoritmo levou " + str(Generations) + " iterações.")
+    print(" ")
     #Pop_cut     = ((cut*100)*(Population))//100
     Pop_cut     = cut
     #print(Pop_cut, Population)
@@ -39,32 +42,29 @@ def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mo
 
         avgs += [np.average(high_scores)]
         bests += [high_scores[-1]]
+     
+    
+    if plots == True:
+        logbests = np.log(np.array(bests))
+        logavgs  = np.log(np.array(avgs))   
+
+        dataf = pd.DataFrame(data=[logavgs, logbests], index=["logavgs", "logbests"]).transpose()
+
+        fig, ax = plt.subplots(figsize=(16, 8))
         
-    logbests = np.log(np.array(bests))
-    logavgs  = np.log(np.array(avgs))   
-    
-    dataf = pd.DataFrame(data=[logavgs, logbests], index=["logavgs", "logbests"]).transpose()
-    
-    fig = plt.figure(figsize=(12, 6))
+        
+        ax.set_title('Average vs Best')
 
-    ax1 = fig.add_subplot(121)
-    ax2 = fig.add_subplot(122)
-    
-    ax1.set_title('Average vs Best')
-    ax2.set_title('Best')
-    
-    ax1.set_xlim([0,  Generations-1])
-    ax2.set_xlim([0, Generations-1])
-    
-    ax1.set_xticks(np.arange(0,Generations))
-    ax2.set_xticks(np.arange(0,Generations))
-    
-    ax1.set_xticklabels(np.arange(1,Generations+1))
-    ax2.set_xticklabels(np.arange(1,Generations+1))
-    
-    sb.set_theme(style="darkgrid")
-    sb.lineplot(data=dataf, markers = True, ax = ax1)
+        ax.set_xlim([0,  Generations-1])
 
-    sb.lineplot(data=dataf["logbests"], markers = True, ax = ax2)
+        ax.set_xticks(np.arange(0,Generations))
+
+        ax.set_xticklabels(np.arange(1,Generations+1))
+
+        sb.set_theme(style="darkgrid")
+        
+        #plt.figure(figsize=(14,8))
+        sb.lineplot(data=dataf, markers = True, ax = ax)
+
     return avgs, bests 
     

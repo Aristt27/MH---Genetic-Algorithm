@@ -1,5 +1,6 @@
 import numpy as np
 from itertools import groupby
+from time import time
 
 def all_equal(iterable):
     " Função que verifica se todos os elementos de uma lista são iguais, BEM RAPIDO"
@@ -99,7 +100,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
         pen_1_weight = 48 - sum(C[1])
     
         if pen_1_weight < 0:    # Horário
-          penalty1 += -pen_1_weight
+          penalty1 += ((pen_1_weight)**2)/2
         
   for doc in Docs_pen_3:
     
@@ -110,7 +111,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
         
       if pen_3_weight < 0:
         
-        penalty3 += -pen_3_weight
+        penalty3 += ((pen_3_weight)**2)/2
           
     
   if penalty_check == True:
@@ -130,7 +131,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
     
   x_val = F_obj(X, Data)
     
-  return x_val*(1+ ((penalty1**2) + (penalty3**2)+ penalty2)*(16)) 
+  return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)) 
 
 
 def crossover(ancestors, α, cut_type = "ONE_CUT"):
@@ -144,11 +145,15 @@ def crossover(ancestors, α, cut_type = "ONE_CUT"):
 
     Depois de combinar eu retorno para a forma matricial.
 
-    Quais as chances que queremos de obter [[1,2,3],[1,2,3],[1,2,3],[1,2,3]]? """
+    Quais as chances que queremos de obter [[1,2,3],[1,2,3],[1,2,3],[1,2,3]]? 
+    
+    Cut_type = "ONE_CUT" or "MULTI_CUT"
+    
+    """
 
     #frequency of crossovers are proportional to the distance between two genes
     
-    if cut_type not in ["ONE_CUT", "MULTI_CUT", "MASK_CUT"]:
+    if cut_type not in ["ONE_CUT", "MULTI_CUT"]:
       cut_type == "ONE_CUT"
 
     i        = 0
@@ -161,9 +166,9 @@ def crossover(ancestors, α, cut_type = "ONE_CUT"):
       fit_bias += aux_bias[i:]
 
 
-    recombinant_ancestors = []
+    recombinant_ancestors = [ancestors[-1]]
 
-    for i in range(len_ance):
+    for i in range(len_ance-1):
 
       # Seleciono dois ancestrais, em função da fitness para o cross over
 
@@ -199,11 +204,24 @@ def crossover(ancestors, α, cut_type = "ONE_CUT"):
             
         if cut_type == "MULTI_CUT":
 
-            pass
+            break_point = np.random.randint(1, genes)
 
-        if cut_type == "MASK_CUT":
+            ## Verificar a necessidade de usar deepcopy aqui...
 
-            pass
+            ancestor        = ancestors[idx1]
+            ancestor_target = ancestors[idx2]
+
+            ances = ancestor[:break_point]
+            tor   = ancestor[break_point:]
+            
+            tar   = ancestor_target[:break_point]
+            get   = ancestor_target[break_point:]
+            
+            recombinant_ancestors +=  [tar   +  tor]
+            recombinant_ancestors +=  [ances +  get]
+            recombinant_ancestors +=  [ancestor_target]
+            recombinant_ancestors +=  [ancestor]
+
     
     return recombinant_ancestors
 
@@ -316,7 +334,7 @@ def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
     
     return sortudos+elite
 
-def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
+def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, Verbose = True):
 
   """ Teremos que Data é da forma de Toy2 com informaçoes sobre num de salas etc 
       f_obj será utilizada como fitness provavelmente, e possui entradas:  [Cirurgias, Data, PenaltyTable]
@@ -330,23 +348,35 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
 
 
-      se verbose = True...
-      Se Presolve = True fazemos algumas otimizaçoes antes de comecar a resolver
-      Retorna X_bd. """
+      params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, α, Cut_type, children, β
+      
+      Cut_type = "ONE_CUT" or "MULTI_CUT"
+      
+      """
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, elite_cut, n_sortudos, LimitDay, Max_Rooms, generations, α, children, β = params  # params assessment  (Max_Rooms é o número de salas).
+  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, α, Cut_type, children, β= params  # params assessment  (Max_Rooms é o número de salas).
 
+  stop_len, Zt, tol = stop_criteria
+    
+  if elite_cut < 1:
+    
+    elite_cut = int(((100*elite_cut)*pop_inicial)//100)
 
-  Instance   = (Data, Max_Rooms)
+  if lucky_cut < 1:
+    
+    lucky_cut = int(((100*lucky_cut)*pop_inicial)//100)
+    
+  Data, Max_Rooms = Instancia
     
   Cs         = len(Data)
   HorarioMax = get_horariomax(Data)
 
   fit_idx_vector = []
 
-  
+  t0  = time()
+    
   for i in range(pop_inicial):
     # Aqui vamos sortear um dia, uma sala e um horário para cada cirurgia. Primeiro vamos sortear um dia para cada cirurgia
     Max_Days = np.random.randint(2,LimitDay)
@@ -358,7 +388,7 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
 
     # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
 
-    fit_idx_vector += [[fitness(Xi, Instance, F_obj), Xi]]
+    fit_idx_vector += [[fitness(Xi, Instancia, F_obj), Xi]]
 
   if Verbose == True:
     print("A população inicial é de " +str(pop_inicial))
@@ -370,19 +400,19 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
       print(" ")
 
   fit_idx_vector.sort(reverse = True)
-
-  ancestors = select_ancestors(fit_idx_vector, elite_cut, n_sortudos)
+    
+  ancestors = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
 
   if Verbose == "Strong":
-    print("Ou seja, teremos como os ancestrais(High Scores) os seguintes, tendo em vista que elite_cut = " + str(elite_cut + n_sortudos))
+    print("Ou seja, teremos como os ancestrais(High Scores) os seguintes, tendo em vista que elite_cut = " + str(elite_cut + lucky_cut))
     print(" ")
     for ancestor in ancestors:
-      print(ancestor, fitness(ancestor, Instance, F_obj), F_obj(ancestor, Data))
+      print(ancestor, fitness(ancestor, Instancia, F_obj), F_obj(ancestor, Data))
     print(" ")
 
   evolution = [ancestors]
-
-  print(" Preparando para começar as recombinações ...")
+  if Verbose == True:
+    print(" Preparando para começar as recombinações ...")
  
   ## Considerando X na forma (Dia-sala-ordem) para gerar uma pop inicial válida precisamos garantir que os dias n durem mais de 46 intervalos de tempo
   ## Isso pode ser considerado durante um presolve que restringe quais cirurgias podem ser feitas no mesmo dia (analogo ao caso de multiplas salas para multiplos tipos de cirurgia.)
@@ -402,21 +432,22 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
   K = 0
     
   evolution = []
-
+  stop_criteria = [0]*stop_len
+  t = time() - t0
   for generation in range(generations):
-        
+      t0 = time()
       if Verbose == True:
         
-          print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations))
+          print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations), "a ultima demorou: {:.2f}".format(t)+"s")
 
-      recombinant_ancestors = crossover(ancestors,α)
+      recombinant_ancestors = crossover(ancestors,α, Cut_type)
       
       if  Verbose == "Strong" and K <= 2:
         print(" ")
         print(" Aqui vai os ancestrais modificados")
         print(" ")
         for rac in recombinant_ancestors:
-          print(rac,fitness(rac, Instance, F_obj), F_obj(rac, Data))
+          print(rac,fitness(rac, Instancia, F_obj), F_obj(rac, Data))
 
         K = 2
 
@@ -430,18 +461,40 @@ def Genetic_Algorithm(Data, F_obj, params, Presolve = True, Verbose = True):
         print("Se prepara pra ver os filhotes")
         print(" ")
         for child in offspring:
-          print(child, fitness(child, Instance, F_obj), F_obj(child, Data))
+          print(child, fitness(child, Instancia, F_obj), F_obj(child, Data))
 
         print(" ")
         print(" Preparando o Elemento X para as mutações ") 
         
       mutated_offspring     = mutation(offspring, Max_Rooms,β)
         
-      fit_idx_vector = [[fitness(Xi, Instance, F_obj), Xi] for Xi in mutated_offspring]
+      fit_idx_vector = [[fitness(Xi, Instancia, F_obj), Xi] for Xi in mutated_offspring]
       fit_idx_vector.sort(reverse = True)
-      ancestors      = select_ancestors(fit_idx_vector, elite_cut, n_sortudos)
-        
+      ancestors      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
       evolution.append(ancestors)
+      
+      t = time() - t0
+      L = fit_idx_vector[-Zt:]
+      W = np.array(L, dtype=object).T[0]
+      avrg = sum(W)/Zt
+      best = fit_idx_vector[-1]
+        
+      stop_criteria[generation%stop_len] = abs(avrg - best[0]) <= tol
+      
+      if sum(stop_criteria) == stop_len:
+        
+        print(" ")
+        print(" Algoritmo encerrou devido ao criterio de parada mágico ")
+        print(" ")
+        
+        return evolution
+    
+      t = time() - t0
+      if fit_idx_vector[-1][0] < 0:
+        
+        print(" ")
+        print(" Deu negativo, arruma a fitness ")
+        return evolution
 
   ## COmo criterio de parada podemos verificar o quanto a média da geração está melhorando.
   ## Ou entao o max da solucao (algo em funçao dos dois seria melhor ainda).
