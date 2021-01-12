@@ -70,7 +70,7 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
 
       objective += (xi_p)*((w_c + 7))**2 
       
-      if w_c > l_p: #Caso a cirurgia tenha vencido
+      if w_c > l_p: #Caso a cirurgia tenha vencido (w_c +7?)
         
         objective += (xi_p)*(w_c + 9 - l_p)**2 
 
