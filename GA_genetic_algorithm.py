@@ -79,8 +79,8 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
     cirurgia_duracao       = Data[idx][-1] + time_interval
     
     
-    Dias_pen_12[cirurgia_dia - 1][cirurgia_sala - 1]      += [[cirurgia_especialidade, cirurgia_duracao]]  
-    Docs_pen_3[cirurgia_medico - 1][cirurgia_dia - 1]     += [cirurgia_duracao]
+    Dias_pen_12[cirurgia_dia - 1][cirurgia_sala - 1].append([cirurgia_especialidade, cirurgia_duracao])
+    Docs_pen_3[cirurgia_medico - 1][cirurgia_dia - 1].append(cirurgia_duracao)
 
   
   Dias_pen_12 = Dias_pen_12[:max_days]
@@ -134,130 +134,89 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)) 
 
 
-def crossover(ancestors, α, cut_type = "ONE_CUT"):
-    """Synapsys two ~randomly~ different ancestors chromossomes ~ parallel or not (?) α,δ ??
-    
-    \alpha -> probabilidade de cruzamento
+def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
+    """ \alpha -> probabilidade de cruzamento
 
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
-
-    Primeiro eu transformo em x = [1,2,3,3,2,1,1,2,3,1,2,3] com alguma funcao magica.
-
-    Depois de combinar eu retorno para a forma matricial.
 
     Quais as chances que queremos de obter [[1,2,3],[1,2,3],[1,2,3],[1,2,3]]? 
     
     Cut_type = "ONE_CUT" or "MULTI_CUT"
     
     """
-
-    #frequency of crossovers are proportional to the distance between two genes
     
     if cut_type not in ["ONE_CUT", "MULTI_CUT"]:
       cut_type == "ONE_CUT"
 
     i        = 0
     len_ance = len(ancestors)
-    genes    = len(ancestors[0])  # numeros de cirurgias, talvez devesse considerar o dobro...(teste legal)
+    genes    = len(ancestors[0])
     
     aux_bias = [i for i in range(len_ance)]  # Isso daqui controla a probabilidade do crossover, 
     fit_bias = []                            # Talvez teha que ajustar isso para ser maleável.
     for i in aux_bias:
       fit_bias += aux_bias[i:]
+    lfb      = len(fit_bias)
 
-
-    recombinant_ancestors = [ancestors[-1]]
-
-    for i in range(len_ance-1):
-
-      # Seleciono dois ancestrais, em função da fitness para o cross over
-
-      idx1 = fit_bias[np.random.randint(len_ance)]
-      idx2 = fit_bias[np.random.randint(len_ance)]
-
-      if idx1 == idx2:
-        recombinant_ancestors += [ancestors[idx1],ancestors[idx1]] # Caso sejam o mesmo, crossover nao muda
-
-      else: # caso contrário, Cross over!!
+    offspring = []
+    
+    while len(offspring) < pop_inicial:
         
-        #primeiro determinamos qual tipo é:
+      idx1 = fit_bias[np.random.randint(lfb)]
+      idx2 = fit_bias[np.random.randint(lfb)]  
+        
+      if idx1 == idx2:
+        offspring.append(ancestors[idx1]) # Caso sejam o mesmo, crossover nao muda
+        offspring.append(ancestors[idx1])  
+        
+      else: # caso contrário, Cross over!!
 
         if cut_type == "ONE_CUT":
 
             break_point = np.random.randint(1, genes)
 
             ## Verificar a necessidade de usar deepcopy aqui...
-
             ancestor        = ancestors[idx1]
             ancestor_target = ancestors[idx2]
 
             ances = ancestor[:break_point]
             tor   = ancestor[break_point:]
-            
+
             tar   = ancestor_target[:break_point]
             get   = ancestor_target[break_point:]
-            
-            recombinant_ancestors +=  [tar   +  tor]
-            recombinant_ancestors +=  [ances +  get]
-            recombinant_ancestors +=  [ancestor_target]
-            recombinant_ancestors +=  [ancestor]
-            
+
+            offspring.append(tar   +  tor)
+            offspring.append(ances +  get)
+            offspring.append(ancestor_target)
+            offspring.append(ancestor)
+
         if cut_type == "MULTI_CUT":
 
-            break_point = np.random.randint(1, genes)
-
-            ## Verificar a necessidade de usar deepcopy aqui...
-
+            n_break_points = np.random.randint(1, genes//2)
+            
             ancestor        = ancestors[idx1]
             ancestor_target = ancestors[idx2]
 
-            ances = ancestor[:break_point]
-            tor   = ancestor[break_point:]
+            for _ in range(n_break_points):
+            ## Verificar a necessidade de usar deepcopy aqui...
+
+                break_point = np.random.randint(1, genes)
+
+
+
+                ances = ancestor[:break_point]
+                tor   = ancestor[break_point:]
+
+                tar   = ancestor_target[:break_point]
+                get   = ancestor_target[break_point:]
+
+            offspring.append(tar   +  tor)
+            offspring.append(ances +  get)
+            offspring.append(ancestor_target)
+            offspring.append(ancestor)
             
-            tar   = ancestor_target[:break_point]
-            get   = ancestor_target[break_point:]
-            
-            recombinant_ancestors +=  [tar   +  tor]
-            recombinant_ancestors +=  [ances +  get]
-            recombinant_ancestors +=  [ancestor_target]
-            recombinant_ancestors +=  [ancestor]
+    return ancestors, offspring
 
-    
-    return recombinant_ancestors
-
-
-def offspringer(recombinant_ancestors, children):
-  """ Função responsável por gerar a próxima geração, escolhendo pares de ancestrais recombinados e gerando K = children filhos por geração (hmm talvez tenha algo melhor).
-  
-  A recombinação é feita escolhendo metade dos genes do pai e metade da mãe EM MÉDIA (podendo ser iguais)"""
-
-
-  Len_rec = len(recombinant_ancestors)
-
-  offspring = recombinant_ancestors
-
-  for child in range(children):
-
-    baby = []
-  
-    idx_a   = np.random.randint(Len_rec)
-    idx_b   = np.random.randint(Len_rec)
-    
-    for (gene_a, gene_b) in zip(recombinant_ancestors[idx_a], recombinant_ancestors[idx_b]):
-
-      p = np.random.rand(1)
-
-      if p > 0.5:
-
-          baby.append(gene_a)
-  
-      else:
-
-          baby.append(gene_b)
-    
-    offspring.append(baby)
-
-  return offspring
 
 def mutation(offspring,Max_Rooms,β):
     
@@ -293,25 +252,27 @@ def mutation(offspring,Max_Rooms,β):
                             
                             if g > 1:
                                 mg = max(1, g + 2*np.random.randint(0,2) - 1)
-                                altered_gene += [min(mg, Max_Rooms)]
+                                altered_gene.append(min(mg, Max_Rooms))
                             if g == 1:
-                                altered_gene += [min(2, Max_Rooms)]
+                                altered_gene.append(min(2, Max_Rooms))
                         else:
                             if g > 1:
-                                altered_gene += [max(1, g + 2*np.random.randint(0,2) - 1)]
+                                altered_gene.append(max(1, g + 2*np.random.randint(0,2) - 1))
                             if g == 1:
-                                altered_gene += [2]
+                                altered_gene.append(2)
                     else:
                         
-                        altered_gene +=[g]
+                        altered_gene.append(g)
                 
-                altered_child += [altered_gene]
+                altered_child .append(altered_gene)
                 
-            mutated_offspring += [altered_child]
+            mutated_offspring .append(child)
+            mutated_offspring .append(altered_child)
+
                         
         else:
     
-            mutated_offspring += [child]  # Se ele perder de β, ele não vai ser mutado.
+            mutated_offspring.append(child) # Se ele perder de β, ele não vai ser mutado.
     
     return mutated_offspring
 
@@ -322,17 +283,19 @@ def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
     sortudos        = []
     Max_Sortudo     = len(fit_idx_vector) - elite_cut
     
+    indices         = [i for i in range(len(fit_idx_vector))][-elite_cut:]
     
     fit_idx_vector = fit_idx_vector[:-elite_cut] 
     for i in range(n_sortudos):
         
         sortudo_idx = np.random.randint(Max_Sortudo)
-        sortudos += [fit_idx_vector[sortudo_idx][1]]
+        sortudos.append(fit_idx_vector[sortudo_idx][1])
 
         fit_idx_vector = fit_idx_vector[:sortudo_idx] + fit_idx_vector[sortudo_idx+1:]
         Max_Sortudo -= 1
-    
-    return sortudos+elite
+        
+        indices.append(sortudo_idx)
+    return sortudos+elite, indices
 
 def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, Verbose = True):
 
@@ -348,7 +311,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
 
 
-      params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, α, Cut_type, children, β
+      params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β
       
       Cut_type = "ONE_CUT" or "MULTI_CUT"
       
@@ -356,7 +319,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, α, Cut_type, children, β= params  # params assessment  (Max_Rooms é o número de salas).
+  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
 
   stop_len, Zt, tol = stop_criteria
     
@@ -388,91 +351,40 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
 
     # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
 
-    fit_idx_vector += [[fitness(Xi, Instancia, F_obj), Xi]]
-
-  if Verbose == True:
-    print("A população inicial é de " +str(pop_inicial))
-    print(" ")
-    if Verbose == "Strong":
-      for idx in fit_idx_vector:
-        print(idx)
-
-      print(" ")
+    fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
 
   fit_idx_vector.sort(reverse = True)
     
-  ancestors = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
-
-  if Verbose == "Strong":
-    print("Ou seja, teremos como os ancestrais(High Scores) os seguintes, tendo em vista que elite_cut = " + str(elite_cut + lucky_cut))
-    print(" ")
-    for ancestor in ancestors:
-      print(ancestor, fitness(ancestor, Instancia, F_obj), F_obj(ancestor, Data))
-    print(" ")
+  ancestors, indices = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
 
   evolution = [ancestors]
-  if Verbose == True:
-    print(" Preparando para começar as recombinações ...")
- 
-  ## Considerando X na forma (Dia-sala-ordem) para gerar uma pop inicial válida precisamos garantir que os dias n durem mais de 46 intervalos de tempo
-  ## Isso pode ser considerado durante um presolve que restringe quais cirurgias podem ser feitas no mesmo dia (analogo ao caso de multiplas salas para multiplos tipos de cirurgia.)
-  ## Acho que são as unicas restrições. 
-  ## (ordem das cirurgias nao é relevante para a f_obj) por enquanto. Precisamos alterá-la.
-  ## Vou implementar a função sugerida no grupo do telegram. 
-
-
-  ## Dado tudo isso, Geramos um conjunto inicial de tamanho pop_inicial onde cada individui é um X com uma ordem aleatoria distribuida uniformemente sobre as soluções viáveis (toda sol é viáve?)
-
-  ## A partir dessa população, calculamos a fitness em todo mundo (uma modificacao da f_obj para rodar mais rapido provavlemente)
-
-  ## O maxdays das proximas geraação é o 2*soft_max das melhores soluções+k (k = 2 algo asssim) desse mdo
-  ## ele tende a manter um número perto de dias decidido pelo negocio  anterior, visto que a média vai cair
-  ## perto da solucao anterior.
-
-  K = 0
     
   evolution = []
   stop_criteria = [0]*stop_len
   t = time() - t0
+
   for generation in range(generations):
       t0 = time()
       if Verbose == True:
         
           print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations), "a ultima demorou: {:.2f}".format(t)+"s")
 
-      recombinant_ancestors = crossover(ancestors,α, Cut_type)
-      
-      if  Verbose == "Strong" and K <= 2:
-        print(" ")
-        print(" Aqui vai os ancestrais modificados")
-        print(" ")
-        for rac in recombinant_ancestors:
-          print(rac,fitness(rac, Instancia, F_obj), F_obj(rac, Data))
+      recombinant_ancestors = crossover(ancestors, pop_inicial, Cut_type)
 
-        K = 2
-
-
-      offspring  = offspringer(recombinant_ancestors,children)
-
-
-      if Verbose == "Strong" and K <= 2:
-
-        print(" ")
-        print("Se prepara pra ver os filhotes")
-        print(" ")
-        for child in offspring:
-          print(child, fitness(child, Instancia, F_obj), F_obj(child, Data))
-
-        print(" ")
-        print(" Preparando o Elemento X para as mutações ") 
+      ancestors, offspring  = recombinant_ancestors 
         
       mutated_offspring     = mutation(offspring, Max_Rooms,β)
-        
+    
+      save_fit       = [fit_idx_vector[idc] for idc in indices]
       fit_idx_vector = [[fitness(Xi, Instancia, F_obj), Xi] for Xi in mutated_offspring]
+      fit_idx_vector = fit_idx_vector + save_fit
+        
       fit_idx_vector.sort(reverse = True)
-      ancestors      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
+    
+      ancestors, indices      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
       evolution.append(ancestors)
       
+   
       t = time() - t0
       L = fit_idx_vector[-Zt:]
       W = np.array(L, dtype=object).T[0]
@@ -495,8 +407,5 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
         print(" ")
         print(" Deu negativo, arruma a fitness ")
         return evolution
-
-  ## COmo criterio de parada podemos verificar o quanto a média da geração está melhorando.
-  ## Ou entao o max da solucao (algo em funçao dos dois seria melhor ainda).
 
   return evolution
