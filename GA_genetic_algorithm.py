@@ -160,14 +160,15 @@ def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
 
     offspring = []
     
-    while len(offspring) < pop_inicial:
+    while len(offspring) < pop_inicial - len_ance:
         
       idx1 = fit_bias[np.random.randint(lfb)]
       idx2 = fit_bias[np.random.randint(lfb)]  
         
       if idx1 == idx2:
-        offspring.append(ancestors[idx1]) # Caso sejam o mesmo, crossover nao muda
-        offspring.append(ancestors[idx1])  
+        while idx1 == idx2:
+          idx1 = fit_bias[np.random.randint(lfb)]
+          idx2 = fit_bias[np.random.randint(lfb)]
         
       else: # caso contrário, Cross over!!
 
@@ -214,7 +215,6 @@ def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
             offspring.append(ances +  get)
             offspring.append(ancestor_target)
             offspring.append(ancestor)
-            
     return ancestors, offspring
 
 
@@ -266,7 +266,6 @@ def mutation(offspring,Max_Rooms,β):
                 
                 altered_child .append(altered_gene)
                 
-            mutated_offspring .append(child)
             mutated_offspring .append(altered_child)
 
                         
@@ -384,13 +383,13 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       ancestors, indices      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
       evolution.append(ancestors)
       
-   
-      t = time() - t0
-      L = fit_idx_vector[-Zt:]
+      lindices = indices[:]
+      lindices.sort()
+      L = [fit_idx_vector[ifx] for ifx in lindices][-Zt:]
       W = np.array(L, dtype=object).T[0]
       avrg = sum(W)/Zt
       best = fit_idx_vector[-1]
-        
+      
       stop_criteria[generation%stop_len] = abs(avrg - best[0]) <= tol
       
       if sum(stop_criteria) == stop_len:
@@ -401,11 +400,16 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
         
         return evolution
     
-      t = time() - t0
+        
       if fit_idx_vector[-1][0] < 0:
         
         print(" ")
         print(" Deu negativo, arruma a fitness ")
+        
+
+        
         return evolution
+
+      t = time() - t0
 
   return evolution

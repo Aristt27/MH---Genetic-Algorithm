@@ -40,7 +40,9 @@ def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 15, M
         for X in pop:
              scores = np.append(scores, fitness(X, Instance, F_obj))
         
-        
+ 
+        scores.sort()
+        scores = scores[::-1]
         high_scores  = scores[-cut:]
         avgs     += [np.average(scores)]
         cut_avgs += [np.average(high_scores)]
