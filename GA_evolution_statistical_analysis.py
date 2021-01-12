@@ -6,7 +6,7 @@ import numpy as np
 import seaborn as sb
 import pandas as pd
 
-def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mode = "Default", Verbose = True, plots = True):
+def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 15, Mode = "Default", Verbose = True, plots = True):
     """ Matplots a evolução.
     
     
@@ -29,26 +29,30 @@ def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mo
     Instance, F_obj = fitness_data
         
         
-    avgs  = []
-    bests = []
+    avgs     = []
+    cut_avgs = []
+    bests    = []
     
     for generation in Evolution:
-        high_scores = np.array([])
-        best_pop    = generation[-Pop_cut:]
-
-        for X in best_pop:
-            high_scores = np.append(high_scores, fitness(X, Instance, F_obj))
+        scores = np.array([])
+        pop         = generation[:]
         
-
-        avgs += [np.average(high_scores)]
+        for X in pop:
+             scores = np.append(scores, fitness(X, Instance, F_obj))
+        
+        
+        high_scores  = scores[-cut:]
+        avgs     += [np.average(scores)]
+        cut_avgs += [np.average(high_scores)]
         bests += [high_scores[-1]]
      
     
     if plots == True:
+        logcut   = np.log(np.array(cut_avgs))
         logbests = np.log(np.array(bests))
         logavgs  = np.log(np.array(avgs))   
 
-        dataf = pd.DataFrame(data=[logavgs, logbests], index=["logavgs", "logbests"]).transpose()
+        dataf = pd.DataFrame(data=[logcut, logavgs, logbests], index=["logcuts", "logavgs", "logbests"]).transpose()
 
         fig, ax = plt.subplots(figsize=(16, 8))
         
@@ -66,5 +70,5 @@ def evolution_statistical_analysis(Evolution, fitness, fitness_data, cut = 5, Mo
         #plt.figure(figsize=(14,8))
         sb.lineplot(data=dataf, markers = True, ax = ax)
 
-    return avgs, bests 
+    return cut_avgs, bests 
     
