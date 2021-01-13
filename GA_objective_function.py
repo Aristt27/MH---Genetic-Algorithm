@@ -66,7 +66,7 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
 
       objective += (10*(w_c + 2))**(d_p) 
     
-    if d_p == False: # Caso a cirurgia não tenha sido marcada
+    if d_p == False or d_p>5: # Caso a cirurgia não tenha sido marcada
 
       objective += (xi_p)*((w_c + 7))**2 
       
