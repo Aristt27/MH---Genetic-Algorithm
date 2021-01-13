@@ -247,8 +247,12 @@ def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
               tar   = ancestor_target[:break_point]
               get   = ancestor_target[break_point:]
 
-              offspring.append(tar   +  tor)
-              offspring.append(ances +  get)
+              print(ances.shape,get.shape)
+              print('ances',ances)
+              print('get',get)
+
+              offspring.append(np.append(tar,tor))
+              offspring.append(np.append(ances,get))
               offspring.append(ancestor_target)
               offspring.append(ancestor)
 
@@ -353,9 +357,10 @@ def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
     for i in range(n_sortudos):
         
         sortudo_idx = np.random.randint(Max_Sortudo)
+        print(fit_idx_vector[sortudo_idx,1])
         sortudos.append(fit_idx_vector[sortudo_idx][1])
 
-        fit_idx_vector = fit_idx_vector[:sortudo_idx] + fit_idx_vector[sortudo_idx+1:]
+        fit_idx_vector = np.append(fit_idx_vector[:sortudo_idx],fit_idx_vector[sortudo_idx+1:])
         Max_Sortudo -= 1
         
         indices.append(sortudo_idx)
@@ -407,8 +412,9 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
 
     fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
   
-  print(fit_idx_vector[0])
-  fit_idx_vector.sort(reverse = True)
+  #print(fit_idx_vector[0])
+  fit_idx_vector = np.array(fit_idx_vector)
+  fit_idx_vector = fit_idx_vector [fit_idx_vector [:,0].argsort()]
     
   ancestors, indices = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
 
@@ -431,10 +437,10 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       mutated_offspring     = mutation(offspring, Max_Rooms,β)
     
       save_fit       = [fit_idx_vector[idc] for idc in indices]
-      fit_idx_vector = [[fitness(Xi, Instancia, F_obj), Xi] for Xi in mutated_offspring]
-      fit_idx_vector = fit_idx_vector + save_fit
+      fit_idx_vector = np.array([[fitness(Xi, Instancia, F_obj), Xi] for Xi in mutated_offspring])
+      fit_idx_vector = np.append(fit_idx_vector,save_fit)
         
-      fit_idx_vector.sort(reverse = True)
+      fit_idx_vector = fit_idx_vector [fit_idx_vector [:,0].argsort()]
     
       ancestors, indices      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
       evolution.append(ancestors)
