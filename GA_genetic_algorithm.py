@@ -134,7 +134,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)) 
 
 
-def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
+def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
     """ \alpha -> probabilidade de cruzamento
 
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
@@ -164,46 +164,22 @@ def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
         
       idx1 = fit_bias[np.random.randint(lfb)]
       idx2 = fit_bias[np.random.randint(lfb)]  
-        
-      if idx1 == idx2:
-        while idx1 == idx2:
-          idx1 = fit_bias[np.random.randint(lfb)]
-          idx2 = fit_bias[np.random.randint(lfb)]
-        
-      else: # caso contrário, Cross over!!
+      
+      if np.random.rand(1) < alpha:
+          if idx1 == idx2:
+            while idx1 == idx2:
+              idx1 = fit_bias[np.random.randint(lfb)]
+              idx2 = fit_bias[np.random.randint(lfb)]
 
-        if cut_type == "ONE_CUT":
+          else: # caso contrário, Cross over!!
 
-            break_point = np.random.randint(1, genes)
-
-            ## Verificar a necessidade de usar deepcopy aqui...
-            ancestor        = ancestors[idx1]
-            ancestor_target = ancestors[idx2]
-
-            ances = ancestor[:break_point]
-            tor   = ancestor[break_point:]
-
-            tar   = ancestor_target[:break_point]
-            get   = ancestor_target[break_point:]
-
-            offspring.append(tar   +  tor)
-            offspring.append(ances +  get)
-            offspring.append(ancestor_target)
-            offspring.append(ancestor)
-
-        if cut_type == "MULTI_CUT":
-
-            n_break_points = np.random.randint(1, genes//2)
-            
-            ancestor        = ancestors[idx1]
-            ancestor_target = ancestors[idx2]
-
-            for _ in range(n_break_points):
-            ## Verificar a necessidade de usar deepcopy aqui...
+            if cut_type == "ONE_CUT":
 
                 break_point = np.random.randint(1, genes)
 
-
+                ## Verificar a necessidade de usar deepcopy aqui...
+                ancestor        = ancestors[idx1]
+                ancestor_target = ancestors[idx2]
 
                 ances = ancestor[:break_point]
                 tor   = ancestor[break_point:]
@@ -211,12 +187,41 @@ def crossover(ancestors, pop_inicial, cut_type = "ONE_CUT"):
                 tar   = ancestor_target[:break_point]
                 get   = ancestor_target[break_point:]
 
-            offspring.append(tar   +  tor)
-            offspring.append(ances +  get)
-            offspring.append(ancestor_target)
-            offspring.append(ancestor)
-    return ancestors, offspring
+                offspring.append(tar   +  tor)
+                offspring.append(ances +  get)
+                offspring.append(ancestor_target)
+                offspring.append(ancestor)
 
+            if cut_type == "MULTI_CUT":
+
+                n_break_points = np.random.randint(1, genes//2)
+
+                ancestor        = ancestors[idx1]
+                ancestor_target = ancestors[idx2]
+
+                for _ in range(n_break_points):
+                ## Verificar a necessidade de usar deepcopy aqui...
+
+                    break_point = np.random.randint(1, genes)
+
+
+
+                    ances = ancestor[:break_point]
+                    tor   = ancestor[break_point:]
+
+                    tar   = ancestor_target[:break_point]
+                    get   = ancestor_target[break_point:]
+
+                offspring.append(tar   +  tor)
+                offspring.append(ances +  get)
+                offspring.append(ancestor_target)
+                offspring.append(ancestor)
+        else:
+            offspring.append(ancestors[idx1])   
+            offspring.append(ancestors[idx2])
+            
+    return ancestors, offspring
+        
 
 def mutation(offspring,Max_Rooms,β):
     
@@ -318,7 +323,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
+  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, alpha, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
 
   stop_len, Zt, tol = stop_criteria
     
@@ -368,7 +373,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
         
           print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations), "a ultima demorou: {:.2f}".format(t)+"s")
 
-      recombinant_ancestors = crossover(ancestors, pop_inicial, Cut_type)
+      recombinant_ancestors = crossover(ancestors, pop_inicial, alpha, Cut_type)
 
       ancestors, offspring  = recombinant_ancestors 
         
