@@ -251,7 +251,10 @@ def crossover2(ancestors, indices, fit_idx_vector, pop_inicial, cut_type = "ONE_
 
     n_torneios = 2*(pop_inicial - len_ance)
     size_torneios = 3
-    vencedores_torneio = faz_torneios(np.array(fit_idx_vector)[:, 1],np.array(fit_idx_vector)[:, 0],n_torneios,size_torneios)
+    A = np.array(fit_idx_vector, dtype=object)
+    B = A[:, 1]
+    C = A[:, 0]
+    vencedores_torneio = faz_torneios(B,C,n_torneios,size_torneios)
     
     while len(offspring) < pop_inicial - len_ance:
         

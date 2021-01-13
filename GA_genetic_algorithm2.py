@@ -30,9 +30,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   - Cirurgião em mais de uma cirurgia ao mesmo tempo;
   
   Data = (Data, Max_Rooms)
-
   Começando dando uma penalização de 10% da F_obj para cada uma das infrações (dualizando as restrições)
-
   A FAZER: 
   - Inserir penalização para cirurgião em dois lugares ao mesmo tempo(Help)
   - Inserir uma maior penalização para cirurgias no mesmo dia (quanto mais ultrapassa do limite, mais penaliza)(Feito)
@@ -151,9 +149,7 @@ def faz_torneios(individuos, fos, n_torneios, size_torneios):
 
 def crossover(ancestors, indices, fit_idx_vector, pop_inicial, cut_type = "ONE_CUT"):
     """ \alpha -> probabilidade de cruzamento
-
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
-
     Quais as chances que queremos de obter [[1,2,3],[1,2,3],[1,2,3],[1,2,3]]? 
     
     Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -171,7 +167,10 @@ def crossover(ancestors, indices, fit_idx_vector, pop_inicial, cut_type = "ONE_C
 
     n_torneios = 2*(pop_inicial - len_ance)
     size_torneios = 3
-    vencedores_torneio = faz_torneios(np.array(fit_idx_vector)[:, 1],np.array(fit_idx_vector)[:, 0],n_torneios,size_torneios)
+    A = np.array(fit_idx_vector, dtype=object)
+    B = A[:, 1]
+    C = A[:, 0]
+    vencedores_torneio = faz_torneios(B,C,n_torneios,size_torneios)
     
     while len(offspring) < pop_inicial - len_ance:
         
@@ -316,13 +315,8 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       params são os parãmetros do algoritimo genético:  params = [\alpha,...?] 
       
       Max_Rooms = Numero de salas vem de onde??  (Razoavel supor que o máximo é o numero de  especialidades? acho que nao)
-
-
       Lembrete que Data é a matriz na forma:
-
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
-
-
       params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β
       
       Cut_type = "ONE_CUT" or "MULTI_CUT"
