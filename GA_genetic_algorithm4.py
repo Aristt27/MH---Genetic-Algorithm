@@ -30,9 +30,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   - Cirurgião em mais de uma cirurgia ao mesmo tempo;
   
   Data = (Data, Max_Rooms)
-
   Começando dando uma penalização de 10% da F_obj para cada uma das infrações (dualizando as restrições)
-
   A FAZER: 
   - Inserir penalização para cirurgião em dois lugares ao mesmo tempo(Help)
   - Inserir uma maior penalização para cirurgias no mesmo dia (quanto mais ultrapassa do limite, mais penaliza)(Feito)
@@ -138,6 +136,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
 def aloca_cirurgias(instancia, n_sala, n_dia = 5,  max_dia = 48): 
     # cria uma copia das instancias e dá um shuffle
     #temos que aumentar 2 em cada tempo por causa da higienizacao
+    instancia = np.array(instancia)
     instancia[:,-1] +=2 
     instancias_alteradas = instancia[:]
     np.random.shuffle(instancias_alteradas)
@@ -369,13 +368,8 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       params são os parãmetros do algoritimo genético:  params = [\alpha,...?] 
       
       Max_Rooms = Numero de salas vem de onde??  (Razoavel supor que o máximo é o numero de  especialidades? acho que nao)
-
-
       Lembrete que Data é a matriz na forma:
-
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
-
-
       params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β
       
       Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -412,7 +406,8 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
     # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
 
     fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
-
+  
+  print(fit_idx_vector[0])
   fit_idx_vector.sort(reverse = True)
     
   ancestors, indices = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
