@@ -277,9 +277,9 @@ def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
                 offspring.append(ances +  get)
                 offspring.append(ancestor_target)
                 offspring.append(ancestor)
-        else:
-          offspring.append(ancestors[idx1])   
-          offspring.append(ancestors[idx2])
+      else:
+        offspring.append(ancestors[idx1])   
+        offspring.append(ancestors[idx2])
             
     return ancestors, offspring
         
