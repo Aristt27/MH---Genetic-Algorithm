@@ -43,7 +43,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   penalty3     = 0 # Cirurgiao em mais de um lugar, ao mesmo tempo, hmmm
 
         
-  Maximum_day  = len(X)
+  Maximum_day  = 2*len(X)
   Maximum_docs = Maximum_day
 
   Data, Max_Rooms = Instance 
@@ -133,33 +133,23 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
     
   return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)) 
 
-def tourney(entries):
-    
-    widx, wvn   = entries[0]
-    winner_val, winner_name = wvn
-    
-    for entry in entries[1:]:
-      i, jk = entry
-      j, k  = jk
-      if j < winner_val:
-        winner_val = j
-        winner_name = k
-        widx = i
-      
-    return widx, winner_name
+def faz_torneios(individuos, fos, n_torneios, size_torneios):
+    # define quem vai participar dos torneios
+    participantes = np.random.randint(0, len(individuos), size=(n_torneios * size_torneios))
 
-def tournament_selection(indices, fit_idx_vector, q = 2):
-    
-    entries = []
-    for i in range(q):
-      L = np.random.randint(len(indices))
-      entries.append([L,fit_idx_vector[L]])
-    
-    idxw, winner = tourney(entries)
-    
-    return idxw, winner
+    # pega as FO's dos participantes e divide nos torneios
+    torneios = fos[participantes].reshape(n_torneios, size_torneios)
 
-def crossover(ancestors, indices, fit_idx_vector, pop_inicial, q, cut_type = "ONE_CUT"):
+    # divide os participantes nos torneios
+    participantes = participantes.reshape(n_torneios, size_torneios)
+
+    # determina os vencedores de cada torneio
+    vencedores = [i[j] for i,j in zip(participantes, torneios.argmin(1))]
+
+    # elimina da lista de individuos e FO's todos os não vencedores
+    return np.vstack([vencedores, individuos[vencedores]]).T
+
+def crossover(ancestors, indices, fit_idx_vector, pop_inicial, cut_type = "ONE_CUT"):
     """ \alpha -> probabilidade de cruzamento
 
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
@@ -178,11 +168,17 @@ def crossover(ancestors, indices, fit_idx_vector, pop_inicial, q, cut_type = "ON
     genes    = len(ancestors[0])
 
     offspring = []
+
+    n_torneios = 2*(pop_inicial - len_ance)
+    size_torneios = 3
+    vencedores_torneio = faz_torneios(np.array(fit_idx_vector)[:, 1],np.array(fit_idx_vector)[:, 0],n_torneios,size_torneios)
     
     while len(offspring) < pop_inicial - len_ance:
         
-      idx1, winner1 = tournament_selection(indices, fit_idx_vector, q)
-      idx2, winner2 = tournament_selection(indices, fit_idx_vector, q)
+      aux = np.random.choice(len(vencedores_torneio),2,replace = False)
+
+      idx1, winner1 = vencedores_torneio[aux[0]]
+      idx2, winner2 = vencedores_torneio[aux[1]]
         
       if idx1 == idx2:
         offspring.append(winner1)          
@@ -335,9 +331,8 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, q, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
-   
-  print(q) 
+  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
+
 
   stop_len, Zt, tol = stop_criteria
     
@@ -387,9 +382,11 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
         
           print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations), "a ultima demorou: {:.2f}".format(t)+"s")
 
-      recombinant_ancestors = crossover(ancestors, indices ,fit_idx_vector, pop_inicial, q, Cut_type)
+      recombinant_ancestors = crossover(ancestors, indices ,fit_idx_vector, pop_inicial, Cut_type)
 
       ancestors, offspring  = recombinant_ancestors 
+
+      #abcde
         
       mutated_offspring     = mutation(offspring, Max_Rooms,β)
     
