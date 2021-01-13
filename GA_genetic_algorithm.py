@@ -136,9 +136,7 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
 
 def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
     """ \alpha -> probabilidade de cruzamento
-
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
-
     Quais as chances que queremos de obter [[1,2,3],[1,2,3],[1,2,3],[1,2,3]]? 
     
     Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -166,20 +164,45 @@ def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
       idx2 = fit_bias[np.random.randint(lfb)]  
       
       if np.random.rand(1) < alpha:
-          if idx1 == idx2:
-            while idx1 == idx2:
-              idx1 = fit_bias[np.random.randint(lfb)]
-              idx2 = fit_bias[np.random.randint(lfb)]
+        if idx1 == idx2:
+          while idx1 == idx2:
+            idx1 = fit_bias[np.random.randint(lfb)]
+            idx2 = fit_bias[np.random.randint(lfb)]
 
-          else: # caso contrário, Cross over!!
+        else: # caso contrário, Cross over!!
 
-            if cut_type == "ONE_CUT":
+          if cut_type == "ONE_CUT":
+
+              break_point = np.random.randint(1, genes)
+
+              ## Verificar a necessidade de usar deepcopy aqui...
+              ancestor        = ancestors[idx1]
+              ancestor_target = ancestors[idx2]
+
+              ances = ancestor[:break_point]
+              tor   = ancestor[break_point:]
+
+              tar   = ancestor_target[:break_point]
+              get   = ancestor_target[break_point:]
+
+              offspring.append(tar   +  tor)
+              offspring.append(ances +  get)
+              offspring.append(ancestor_target)
+              offspring.append(ancestor)
+
+          if cut_type == "MULTI_CUT":
+
+              n_break_points = np.random.randint(1, genes//2)
+
+              ancestor        = ancestors[idx1]
+              ancestor_target = ancestors[idx2]
+
+              for _ in range(n_break_points):
+                ## Verificar a necessidade de usar deepcopy aqui...
 
                 break_point = np.random.randint(1, genes)
 
-                ## Verificar a necessidade de usar deepcopy aqui...
-                ancestor        = ancestors[idx1]
-                ancestor_target = ancestors[idx2]
+
 
                 ances = ancestor[:break_point]
                 tor   = ancestor[break_point:]
@@ -191,34 +214,9 @@ def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
                 offspring.append(ances +  get)
                 offspring.append(ancestor_target)
                 offspring.append(ancestor)
-
-            if cut_type == "MULTI_CUT":
-
-                n_break_points = np.random.randint(1, genes//2)
-
-                ancestor        = ancestors[idx1]
-                ancestor_target = ancestors[idx2]
-
-                for _ in range(n_break_points):
-                ## Verificar a necessidade de usar deepcopy aqui...
-
-                    break_point = np.random.randint(1, genes)
-
-
-
-                    ances = ancestor[:break_point]
-                    tor   = ancestor[break_point:]
-
-                    tar   = ancestor_target[:break_point]
-                    get   = ancestor_target[break_point:]
-
-                offspring.append(tar   +  tor)
-                offspring.append(ances +  get)
-                offspring.append(ancestor_target)
-                offspring.append(ancestor)
         else:
-            offspring.append(ancestors[idx1])   
-            offspring.append(ancestors[idx2])
+          offspring.append(ancestors[idx1])   
+          offspring.append(ancestors[idx2])
             
     return ancestors, offspring
         
