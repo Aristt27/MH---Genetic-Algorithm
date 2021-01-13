@@ -134,6 +134,65 @@ def fitness(X, Instance, F_obj, verbose = False, penalty_check = False):
   return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)) 
 
 
+#entrada com a instancia importada do csv, maximo de dias, salas (5), intervalos de tempo (48)
+def aloca_cirurgias(instancia, n_sala, n_dia = 5,  max_dia = 48): 
+    # cria uma copia das instancias e dá um shuffle
+    #temos que aumentar 2 em cada tempo por causa da higienizacao
+    instancia[:,-1] +=2 
+    instancias_alteradas = instancia[:]
+    np.random.shuffle(instancias_alteradas)
+
+    # matrizes auxiliares pra dividir as cirurgias nas salas
+    cubao = np.zeros((n_dia, n_sala, max_dia))
+    especialidades = np.zeros((n_dia, n_sala))
+
+    # saida: cirurgia, dia, sala, hora
+    cirurgias = []
+
+    for cirurgia in instancias_alteradas:
+        # pega informacoes das cirurgias
+        codigo = cirurgia[0]
+        especialidade = cirurgia[3]
+        duracao = cirurgia[-1]
+
+        # variavel para parar o for quando alocar a cirurgia
+        c = False
+
+        for i in range(n_dia):
+            for j in range(n_sala):
+                # se a sala/dia ta vazia
+                if especialidades[i, j] == 0:
+                    # ocupa a sala com aquela especialidade
+                    especialidades[i, j] = especialidade
+
+                    # ocupa os horarios com aquela cirurgia
+                    cubao[i, j, :duracao] = codigo
+                    cirurgias.append([codigo, i+1, j+1, 0])
+                    c = True
+                    break
+
+                # se a sala/dia tem outra especialidade, pula
+                elif especialidades[i, j] != especialidade:
+                    continue
+
+                # caso contrario, a sala/dia tem a mesma especialidade da cirurgia
+                else:
+                    #verifica se a cirurgia cabe naquela sala/dia
+                    ocupados = sum(cubao[i, j, :] > 0)
+                    if ocupados + duracao <= max_dia:
+                        # ocupa os horarios com aquela cirurgia
+                        cubao[i, j, ocupados:ocupados+duracao] = codigo
+                        cirurgias.append([codigo, i+1, j+1, ocupados])
+                        c = True
+                        break
+            # se a cirurgia conseguiu ser alocada naquel dia, pula pra proxima
+            if c:
+                break
+    #SAIDA: cirurgia - dia - sala - t0            
+    return cirurgias
+
+
+
 def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
     """ \alpha -> probabilidade de cruzamento
     Considerando x = [[1,2,3],[3,2,1],[1,2,3],[1,2,3]] e y = [[3,2,1],[1,2,3],[3,2,1],[3,2,1]]
