@@ -215,8 +215,8 @@ def crossover(ancestors, pop_inicial, alpha, cut_type = "ONE_CUT"):
               offspring.append(ancestor_target)
               offspring.append(ancestor)
       else:
-          offspring.append(ancestor[idx1])
-          offspring.append(ancestor[idx2])
+          offspring.append(ancestors[idx1])
+          offspring.append(ancestors[idx2])
     return ancestors, offspring
 
 def faz_torneios(individuos, fos, n_torneios, size_torneios):
