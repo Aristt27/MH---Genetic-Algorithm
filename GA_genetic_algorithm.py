@@ -189,7 +189,11 @@ def aloca_cirurgias(instancia, n_sala, n_dia = 5,  max_dia = 48):
             if c:
                 break
     #SAIDA: cirurgia - dia - sala - t0            
-    return cirurgias
+    resultado = np.array(cirurgias)
+    
+    #SAIDA: dia- sala - t0 com cirurgias em ORDEM
+    return resultado[resultado[:,0].argsort()][:,1:]
+
 
 
 
