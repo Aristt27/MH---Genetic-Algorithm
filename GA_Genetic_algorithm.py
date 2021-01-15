@@ -3,8 +3,8 @@ import numpy as np
 from GA_fitness import fitness
 from GA_crossover import crossover
 from GA_mutation import mutation
-from GA_objective_function import funcao_objetivo as F_obj
 
+from Objective_function import funcao_objetivo as F_obj
 from random import sample
 from time import time
 
