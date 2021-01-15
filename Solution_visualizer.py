@@ -9,7 +9,7 @@ def get_tempo(room):
   return j
 
 
-def sol_bd(X, Data, verbose = True):
+def solution_visualize(X, Data, verbose = True):
   """ Retorna um quadrado, possivelmente bonitinho, com as informações sobre salas ocupadas e etc 
   
   A meta é transformar X= [[1,1,1],[1,1,8],[2,1,1],[2,1,11],[3,1,1],[4,1,1],[3,1,13],[4,1,17]] (Dia-sala-t0) em 
