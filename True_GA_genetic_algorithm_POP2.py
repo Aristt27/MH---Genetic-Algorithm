@@ -241,6 +241,7 @@ def mutation(offspring,Max_Rooms,β):
      Com probabilidade β ele escolhe o filho para mutar
      
      """
+    Prob              = (β*3)/2
     nonmut            = []
     mut_idxs          = []
     mutated_offspring = []
@@ -249,7 +250,7 @@ def mutation(offspring,Max_Rooms,β):
         
         altered_child = []
         
-        if np.random.rand(1) < β: ## Caso ele ganhe de β, ele vai ser mutado.
+        if np.random.rand(1) < Prob: ## Caso ele perca de β, ele vai ser mutado.
                 
             for idxs, gene in enumerate(child):
                 
@@ -419,19 +420,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
   fit_idx_vector = []
 
   t0  = time()
-    
-  #for i in range(int(pop_inicial*0.76)):
-    # Aqui vamos sortear um dia, uma sala e um horário para cada cirurgia. Primeiro vamos sortear um dia para cada cirurgia
-    #Max_Days = np.random.randint(2,LimitDay)
-
-    #Xi  = [[np.random.randint(1,Max_Days), np.random.randint(1, Max_Rooms+1), np.random.randint(1,HorarioMax+1)] for j in range(Cs)]
-
-
-    # Falta verificarmos as salas bem como horários sobrepostos (acho que podemos colocar isso na função fitness, penalizando exponencialmente caso isso aconteça)
-
-    # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
-
-    #fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
+   
 
   for i in range(pop_inicial):
     Xi  = aloca_cirurgias(Data,  Max_Rooms)
@@ -446,7 +435,6 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
   ancestors, ans_fits = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
   evolution = [ancestors[:]]
     
-  evolution = []
   stop_criteria = [0]*stop_len
   t = time() - t0
 
@@ -488,7 +476,6 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
       #print(L)
       avrg = sum(L)/Zt
       best = L[-1]
-      print(best)
       stop_criteria[generation%stop_len] = abs(avrg - best) <= tol
       
       if sum(stop_criteria) == stop_len:
