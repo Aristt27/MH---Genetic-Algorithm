@@ -1,6 +1,6 @@
 import numpy as np
 from itertools import groupby
-from GA_objective_function import funcao_objetivo as F_obj
+from Objective_function import funcao_objetivo as F_obj
 
 def all_equal(iterable):
     " Função que verifica se todos os elementos de uma lista são iguais, BEM RAPIDO"
