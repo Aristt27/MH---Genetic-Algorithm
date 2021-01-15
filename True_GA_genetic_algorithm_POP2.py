@@ -1,4 +1,5 @@
 import numpy as np
+import random
 from itertools import groupby
 from time import time
 
@@ -262,13 +263,13 @@ def mutation(offspring,Max_Rooms,β):
                         
                         if idx == 1:
                             
-                            if g > 1:
+                            if g > 1 or g < 1:
                                 mg = max(1, g + 2*np.random.randint(0,2) - 1)
                                 altered_gene.append(min(mg, Max_Rooms))
                             if g == 1:
                                 altered_gene.append(min(2, Max_Rooms))
                         else:
-                            if g > 1:
+                            if g > 1 or g < 1:
                                 altered_gene.append(max(1, g + 2*np.random.randint(0,2) - 1))
                             if g == 1:
                                 altered_gene.append(2)
@@ -295,31 +296,24 @@ def mutation(offspring,Max_Rooms,β):
 def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
     
     elite           = [idx[1] for idx in fit_idx_vector[-elite_cut:]]
+    elite_fit       = [idx[0] for idx in fit_idx_vector[-elite_cut:]]
+    
     sortudos        = []
+    sortudos_fit    = []
+    
     Max_Sortudo     = len(fit_idx_vector) - elite_cut
-    indices               = []
-    elite_indices         = [i for i in range(len(fit_idx_vector))][-elite_cut:]
-    
-    fit_idx_vector2 = fit_idx_vector[:-elite_cut] 
-    for i in range(n_sortudos):
-        
-        sortudo_idx = np.random.randint(Max_Sortudo)
-        sortudos.append(fit_idx_vector[sortudo_idx][1])
+    sortudos_idxs = random.sample(range(Max_Sortudo), n_sortudos)
 
-        fit_idx_vector2 = fit_idx_vector2[:sortudo_idx] + fit_idx_vector2[sortudo_idx+1:]
-        Max_Sortudo -= 1
-        
-        k = 0
-        for idd in indices:
-            if idd < sortudo_idx:
-                k += 1
-                
-        indices.append(sortudo_idx + k)
+    sortudos_idxs.sort()
+    for sidx in sortudos_idxs:
+        sortudos.append(fit_idx_vector[sidx][1])
+        sortudos_fit.append(fit_idx_vector[sidx][0])
     
-    Ieli = indices+elite_indices
-    anc_fit = [fit_idx_vector[ifx][0] for ifx in Ieli]
-    
-    return sortudos+elite, anc_fit
+    soeli = sortudos+elite
+    soeli_fit = sortudos_fit+elite_fit
+
+
+    return soeli, soeli_fit
 
 
 #entrada com a instancia importada do csv, maximo de dias, salas (5), intervalos de tempo (48)
@@ -450,8 +444,7 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
   fit_idx_vector.sort(reverse = True)
     
   ancestors, ans_fits = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
-
-  evolution = [ancestors]
+  evolution = [ancestors[:]]
     
   evolution = []
   stop_criteria = [0]*stop_len
@@ -480,20 +473,22 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
           fit_idx_vector.append([fitness(mXi, Instancia, F_obj), mXi])
         else:
           indc = nonrec_dict[midx]
-          fit_idx_vector.append([fit_idx_vector[indc][0], mXi])
+          #print(nonrec_dict, midx)
+          #print(fitness(mXi, Instancia, F_obj), ans_fits[indc], 'cueio')
+          fit_idx_vector.append([ans_fits[indc], mXi])
+          #fit_idx_vector.append([fitness(mXi, Instancia, F_obj), mXi])
             
       fit_idx_vector.sort(reverse = True)
-      
-      #print("Idx aa", fit_idx_vector[0], "Idx zz")  
+          
       ancestors, ans_fits      = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
-      evolution.append(ancestors)
-      #print("ancestors ", ancestors, "fits", ans_fits)
+      evolution.append(ancestors[:])
+     
       ans_fits.sort(reverse = True)
       L = ans_fits[-Zt:]
       #print(L)
       avrg = sum(L)/Zt
       best = L[-1]
-      
+      print(best)
       stop_criteria[generation%stop_len] = abs(avrg - best) <= tol
       
       if sum(stop_criteria) == stop_len:
