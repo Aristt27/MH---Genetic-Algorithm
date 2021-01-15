@@ -1,4 +1,5 @@
 import numpy as np
+from GA_objective_function import funcao_objetivo as F_obj
 
 def get_tempo(room):
   j = 0
@@ -8,7 +9,7 @@ def get_tempo(room):
   return j
 
 
-def sol_bd(X, Data, F_obj, verbose = True):
+def sol_bd(X, Data, verbose = True):
   """ Retorna um quadrado, possivelmente bonitinho, com as informações sobre salas ocupadas e etc 
   
   A meta é transformar X= [[1,1,1],[1,1,8],[2,1,1],[2,1,11],[3,1,1],[4,1,1],[3,1,13],[4,1,17]] (Dia-sala-t0) em 
