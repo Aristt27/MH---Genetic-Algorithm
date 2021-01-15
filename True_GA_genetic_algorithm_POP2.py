@@ -385,22 +385,29 @@ def aloca_cirurgias(instancia,  n_sala, n_dia = 5, max_dia = 48):
 
 def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, Verbose = True):
 
-  """ Teremos que Data é da forma de Toy2 com informaçoes sobre num de salas etc 
-      f_obj será utilizada como fitness provavelmente, e possui entradas:  [Cirurgias, Data, PenaltyTable]
-      params são os parãmetros do algoritimo genético:  params = [\alpha,...?] 
-      
-      Max_Rooms = Numero de salas vem de onde??  (Razoavel supor que o máximo é o numero de  especialidades? acho que nao)
+  """ 
+      Instancia contém a dupla (Data, Max_Rooms)
+            (Max_Rooms é o número de salas).
+
       Lembrete que Data é a matriz na forma:
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
-      params = pop_inicial, elite_cut, lucky_cut, LimitDay, generations, Cut_type, β
       
+      params = pop_inicial_total, elite_cut, lucky_cut, generations, alpha, Cut_type, β  # params assessment  
+      
+      pop_inicial_total = (greedy_pop, random_pop)
+
       Cut_type = "ONE_CUT" or "MULTI_CUT"
       
       """
 
   # primeiro calculamos o numero de cirurgias: Len(Data) vs Data[-1][0]  (por enquanto Data = Toy2)
 
-  pop_inicial, elite_cut, lucky_cut, LimitDay, generations, alpha, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
+  pop_inicial_total, elite_cut, lucky_cut, generations, alpha, Cut_type, β = params  # params assessment  (Max_Rooms é o número de salas).
+
+  greedy_pop, random_pop = pop_inicial_total
+  
+  pop_inicial = greedy_pop + random_pop
+  
 
   stop_len, Zt, tol = stop_criteria
     
@@ -420,13 +427,13 @@ def Genetic_Algorithm(Instancia, F_obj, params, stop_criteria,Presolve = True, V
   fit_idx_vector = []
 
   t0  = time()
-   
+  for i in range(random_pop):
+    Xi  = [[np.random.randint(1,6), np.random.randint(1, Max_Rooms+1), np.random.randint(1,HorarioMax+1)] for j in range(Cs)]
 
-  for i in range(pop_inicial):
+    fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
+
+  for i in range(greedy_pop):
     Xi  = aloca_cirurgias(Data,  Max_Rooms)
-    # Falta verificarmos as salas bem como horários sobrepostos (acho que podemos colocar isso na função fitness, penalizando exponencialmente caso isso aconteça)
-
-    # Para maximizar as chances de que a solução seja viável, como fazer? Talvez possamos confiar cegamente na função objetivo pra gerar uma população boa no final....
 
     fit_idx_vector.append([fitness(Xi, Instancia, F_obj), Xi])
 
