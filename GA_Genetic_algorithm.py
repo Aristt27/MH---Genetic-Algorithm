@@ -1,7 +1,7 @@
 import numpy as np
 
 from GA_fitness import fitness
-from GA_crossover import crossover
+from GA_crossover import crossover, crossover_tournament
 from GA_mutation import mutation
 
 from random import sample
@@ -106,8 +106,9 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
       Lembrete que Data é a matriz na forma:
       Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
       
-      params = pop_inicial_total, elite_cut, lucky_cut, generations, alpha, Cut_type, β  # params assessment  
-      
+      params = pop_inicial_total, gen_cuts, cross_params, mutation_params  
+      gen_cuts = elite_cut, lucky_cut
+      cross_params = Cross_selection, alpha, Cut_type, tournament_size
       pop_inicial_total = (greedy_pop, random_pop)
 
       Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -122,7 +123,9 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
   pop_inicial            = greedy_pop + random_pop
 
   elite_cut, lucky_cut   = gen_cuts
-  alpha, Cut_type        = cross_params
+    
+  Cross_selection, alpha, Cut_type, tournament_size  = cross_params
+
   beta                   = mutation_params
     
   generations, stop_len, Zt, tol = stop_criteria
@@ -166,8 +169,16 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
         
           print(" Estamos gerando a geração " + str(generation + 1 ) + " de " + str(generations), "a ultima demorou: {:.2f}".format(t)+"s")
 
-      recombinant_ancestors = crossover(ancestors, pop_inicial, alpha, Cut_type)
-        
+      if Cross_selection == "Ranking":
+        recombinant_ancestors = crossover(ancestors, pop_inicial, alpha, Cut_type)
+      if Cross_selection == "Tournament":
+        recombinant_ancestors = crossover_tournament(ancestors, ans_fits, pop_inicial, alpha, Cut_type, tournament_size)
+      if Cross_selection == "Mix":
+        if generation % 2 == 0:
+          recombinant_ancestors = crossover(ancestors, pop_inicial, alpha, Cut_type)
+        if generation % 2 == 1:
+          recombinant_ancestors = crossover_tournament(ancestors, ans_fits, pop_inicial, alpha, Cut_type, tournament_size)
+
       ancestors, offspring, rec_idxs, nonrec  = recombinant_ancestors 
 
       nonrec_dict = {mn: nm for mn, nm in nonrec}
