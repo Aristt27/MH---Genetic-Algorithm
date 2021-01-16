@@ -1,6 +1,7 @@
 import numpy as np
 from itertools import groupby
 from Objective_function import funcao_objetivo as F_obj
+from GA_viola_medico import viola_medico
 
 def all_equal(iterable):
     " Função que verifica se todos os elementos de uma lista são iguais, BEM RAPIDO"
