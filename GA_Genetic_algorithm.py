@@ -3,6 +3,7 @@ import numpy as np
 from GA_fitness import fitness
 from GA_crossover import crossover, crossover_tournament
 from GA_mutation import mutation, mutation_insertion
+from GA_viola_medico import viola_medico
 
 from random import sample
 from time import time
