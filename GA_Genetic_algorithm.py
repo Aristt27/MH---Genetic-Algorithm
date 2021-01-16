@@ -2,7 +2,7 @@ import numpy as np
 
 from GA_fitness import fitness
 from GA_crossover import crossover, crossover_tournament
-from GA_mutation import mutation
+from GA_mutation import mutation, mutation_insertion
 
 from random import sample
 from time import time
@@ -97,7 +97,7 @@ def aloca_cirurgias(instancia,  n_sala, n_dia = 5, max_dia = 48):
     return resultado[resultado[:,0].argsort()][:,1:].tolist()
 
 
-def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose = True):
+def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve = True, Verbose = True):
 
   """ 
       Instance contém a dupla (Data, Max_Rooms)
@@ -126,7 +126,7 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
     
   Cross_selection, alpha, Cut_type, tournament_size  = cross_params
 
-  beta                   = mutation_params
+  Mutation_type, beta    = mutation_params
     
   generations, stop_len, Zt, tol = stop_criteria
     
@@ -162,7 +162,7 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
   evo_scores = [ans_fits[:]]
   stop_criteria = [0]*stop_len
   t = time() - t0
-
+     
   for generation in range(generations):
       t0 = time()
       if Verbose == True:
@@ -183,7 +183,15 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
 
       nonrec_dict = {mn: nm for mn, nm in nonrec}
         
-      mutated_offspring, mut_idxs, nonmut  = mutation(offspring, Instance, beta)
+      if Mutation_type == "Swap":  
+        mutated_offspring, mut_idxs, nonmut  = mutation(offspring, Instance, beta)
+      if Mutation_type == "Insertion":
+        mutated_offspring, mut_idxs, nonmut  = mutation_insertion(offspring, Instance, beta)
+      if Mutation_type == "Mix":
+        if generation % 2 == 0:
+          mutated_offspring, mut_idxs, nonmut  = mutation(offspring, Instance, beta)
+        if generation % 2 == 1:
+          mutated_offspring, mut_idxs, nonmut  = mutation_insertion(offspring, Instance, beta)
       
     #  print("rec, nonrec, mut, nonmut ", rec_idxs, nonrec, mut_idxs, nonmut)
       fit_idx_vector = [[afit, ancs] for ancs, afit in zip(ancestors, ans_fits)]
@@ -208,7 +216,11 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Presolve = True, Verbose 
       best = L[-1]
         
       stop_criteria[generation%stop_len] = abs(avrg - best) <= tol
-      
+    
+      if Target:
+        if best < Target:
+          return evolution, evo_scores
+    
       if sum(stop_criteria) == stop_len:
         
         print(" ")
