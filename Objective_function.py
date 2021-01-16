@@ -2,7 +2,7 @@
 
 import numpy as np
 
-DefaultTable = [[90,3],[20,15],[8,60],[3,365]]
+DefaultTable = [[90,3],[20,15],[5,60],[1,365]]
 
 ### Funções Auxiliares (Controlam as Estruturas de dados)
 
