@@ -25,3 +25,4 @@ def viola_medico(instancia,solucao):
                 #senao, faz a cirurgia (acrescenta o tempo dela)
                 else:
                     tempo.append(cirurgia[2]+cirurgia[3])
+    return False
