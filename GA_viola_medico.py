@@ -1,3 +1,5 @@
+import numpy as np
+
 def viola_medico(instancia,solucao):
     #Primeiro temos que saber que medico ira fazer cada cirurgia e quanto irá durar
     #SALA - DIA - TO - MEDICO - DURACAO
