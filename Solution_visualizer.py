@@ -94,14 +94,18 @@ def solution_visualize(X, Instance, verbose = True):
   if verbose == True:
     for an in ans:
      print(an)
-    print(" ")
+    
+    print("###########") 
+    print("Solucao")
+    print(X) 
+    print("###########")
     print(" O Valor da Função objetivo é de: " + str(F_obj(X, Data)))
     print(" O Valor da Fitness é de: " +str(fitness(X,Instance)))
     print(fitness(X,Instance, verbose = True, penalty_check = True))
     print(" Legenda: ")
     print("-2 significa final do turno na sala, naquele dia.")
     print("-1 significa intervalo entre as duas cirurgias.")
-    print(" ")
+    print("###########")
 
     for idx, day in enumerate(ans):
       print(" No dia " + str(idx +1)+ ":")
