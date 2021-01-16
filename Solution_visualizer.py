@@ -1,5 +1,6 @@
 import numpy as np
 from Objective_function import funcao_objetivo as F_obj
+from GA_fitness import fitness
 
 def get_tempo(room):
   j = 0
@@ -9,7 +10,7 @@ def get_tempo(room):
   return j
 
 
-def solution_visualize(X, Data, verbose = True):
+def solution_visualize(X, Instance, verbose = True):
   """ Retorna um quadrado, possivelmente bonitinho, com as informações sobre salas ocupadas e etc 
   
   A meta é transformar X= [[1,1,1],[1,1,8],[2,1,1],[2,1,11],[3,1,1],[4,1,1],[3,1,13],[4,1,17]] (Dia-sala-t0) em 
@@ -40,6 +41,8 @@ def solution_visualize(X, Data, verbose = True):
 
      # primeiro eu preciso saber quantos dias eu tenho na solução (obtido pelo valor máximo na primeira coluna de X)
 
+  Data, aux = Instance
+  
   dia      = 0
   sala     = 1
   ordem    = 2
@@ -93,6 +96,7 @@ def solution_visualize(X, Data, verbose = True):
      print(an)
     print(" ")
     print(" O Valor da Função objetivo é de: " + str(F_obj(X, Data)))
+    print(" O Valor da Fitness é de: " +str(fitness(X,Instance)))
     print(" Legenda: ")
     print("-2 significa final do turno na sala, naquele dia.")
     print("-1 significa intervalo entre as duas cirurgias.")
