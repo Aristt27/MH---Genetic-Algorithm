@@ -90,8 +90,8 @@ def fitness(X, Instance, verbose = False, penalty_check = False):
         penalty3 += ((pen_3_weight)**2)/2
 
   if Max_Rooms > 2:
-    if viola_medico(Data,X) == True:
-      penalty3 = 1
+    #if viola_medico(Data,X) == True:
+      penalty3 = viola_medico(Data,X)
 
 
   #Verifica se os médicos estão trabalhando em mais de um lugar ao mesmo tempo      

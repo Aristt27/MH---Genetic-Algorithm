@@ -7,6 +7,7 @@ def viola_medico(instancia,solucao):
 
     #Quantos medicos diferentes tem? Para poder iterar:
     medicos = set(np.array(instancia)[:,4])
+    violacoes = 0
 
     for medico in medicos:
         for dia in range(1,6):
@@ -23,8 +24,8 @@ def viola_medico(instancia,solucao):
                 #se o tempo inicial da proxima cirurgia for menor que o tempo final da cirurgia anterior, TRUE
                 if cirurgia[2] < tempo[-1]:
                     #print(["True",medico,dia])
-                    return True
+                    violacoes += 1
                 #senao, faz a cirurgia (acrescenta o tempo dela)
                 else:
                     tempo.append(cirurgia[2]+cirurgia[3])
-    return False
+    return violacoes
