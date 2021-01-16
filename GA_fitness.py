@@ -78,16 +78,22 @@ def fitness(X, Instance, verbose = False, penalty_check = False):
         if pen_1_weight < 0:    # Horário
           penalty1 += ((pen_1_weight)**2)/2
         
-  for doc in Docs_pen_3:
-    
-    doc = doc[:5]
-    
+  if Max_Rooms < 3:
+    for doc in Docs_pen_3:
+      doc = doc[:5]
+
     for diazinho in doc:
       pen_3_weight = 48 - sum(diazinho)
-        
+
       if pen_3_weight < 0:
-        
         penalty3 += ((pen_3_weight)**2)/2
+
+  if Max_Rooms > 2:
+    if viola_medico(Instance,X) == True:
+      penalty3 = 1
+
+
+  #Verifica se os médicos estão trabalhando em mais de um lugar ao mesmo tempo      
           
     
   if penalty_check == True:
