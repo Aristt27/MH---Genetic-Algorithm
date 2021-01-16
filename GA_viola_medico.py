@@ -10,7 +10,7 @@ def viola_medico(instancia,solucao):
 
     for medico in medicos:
         for dia in range(1,6):
-            agendadas = solucao_medico[(solucao_medico[:,3]==medico) & (solucao_medico[:,1]==day)]
+            agendadas = solucao_medico[(solucao_medico[:,3]==medico) & (solucao_medico[:,1]==dia)]
             agendadas_ordem = agendadas[agendadas[:,2].argsort()]
             
             #verifica se de fato tem cirurgias naquele dia
