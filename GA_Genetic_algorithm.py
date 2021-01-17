@@ -3,7 +3,6 @@ import numpy as np
 from GA_fitness import fitness
 from GA_crossover import crossover, crossover_tournament
 from GA_mutation import mutation, mutation_insertion
-from GA_viola_medico import viola_medico
 
 from random import sample
 from time import time
@@ -212,15 +211,20 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
   for i in range(random_pop):
     Xi  = [[np.random.randint(1,7), np.random.randint(1, Max_Rooms+1), np.random.randint(1,3)] for j in range(Cs)]
     
+    aa, bb = fitness(Xi, Instance)
+    fit_idx_vector.append([aa, bb])
+    
   for i in range(greedy_pop2):
     Xi  = aloca_cirurgias_random(Data, Max_Rooms, tol=tol_n_alocados_inicial)
 
-    fit_idx_vector.append([fitness(Xi, Instance), Xi])
+    aa, bb = fitness(Xi, Instance)
+    fit_idx_vector.append([aa, bb])
 
   for i in range(greedy_pop):
     Xi  = aloca_cirurgias(Data,  Max_Rooms)
 
-    fit_idx_vector.append([fitness(Xi, Instance), Xi])
+    aa, bb = fitness(Xi, Instance)
+    fit_idx_vector.append([aa, bb])
   
   fit_idx_vector.sort(reverse = True)
 
@@ -267,7 +271,8 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
     
       for midx, mXi in enumerate(mutated_offspring):
         if midx in mut_idxs or midx in rec_idxs:
-          fit_idx_vector.append([fitness(mXi, Instance), mXi])
+          aa, bb = fitness(mXi, Instance)
+          fit_idx_vector.append([aa, bb])
         else:
           indc = nonrec_dict[midx]
           fit_idx_vector.append([ans_fits[indc], mXi])
