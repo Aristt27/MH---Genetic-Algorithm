@@ -3,6 +3,7 @@ import numpy as np
 from GA_fitness import fitness
 from GA_crossover import crossover, crossover_tournament
 from GA_mutation import mutation, mutation_insertion
+from GA_viola_medico import viola_medico
 
 from random import sample
 from time import time
@@ -30,8 +31,6 @@ def select_ancestors(fit_idx_vector, elite_cut, n_sortudos):
 
     return soeli, soeli_fit
 
-
-#entrada com a instancia importada do csv, maximo de dias, salas (5), intervalos de tempo (48)
 def aloca_cirurgias(instancia,  n_sala, n_dia = 5, max_dia = 48):
     # cria uma copia das instancias e dá um shuffle
     instancia = np.array(instancia)
@@ -41,14 +40,18 @@ def aloca_cirurgias(instancia,  n_sala, n_dia = 5, max_dia = 48):
 
     # matrizes auxiliares pra dividir as cirurgias nas salas
     cubao = np.zeros((n_dia, n_sala, max_dia))
+
+    n_medicos = max(set(instancias_alteradas[:, -2]))
+
     especialidades = np.zeros((n_dia, n_sala))
+    medicos = np.zeros((n_medicos, n_dia, max_dia))
 
     # saida: cirurgia, dia, sala, hora
     cirurgias = []
 
-
     for prioridade in range(1, 5):
-        for cirurgia in instancias_alteradas[instancias_alteradas[:, 1] == prioridade]:
+      for medico in np.unique(instancias_alteradas[:, -2]):
+        for cirurgia in instancias_alteradas[(instancias_alteradas[:, 1] == prioridade) & (instancias_alteradas[:, -2] == medico)]:
             # pega informacoes das cirurgias
             codigo = cirurgia[0]
             especialidade = cirurgia[3]
@@ -97,7 +100,67 @@ def aloca_cirurgias(instancia,  n_sala, n_dia = 5, max_dia = 48):
     return resultado[resultado[:,0].argsort()][:,1:].tolist()
 
 
-def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve = True, Verbose = True):
+#entrada com a instancia importada do csv, maximo de dias, salas (5), intervalos de tempo (48)
+def aloca_cirurgias_random(instancia,  n_sala, n_dia = 5, max_dia = 48, max_tentativas = 20, tol = 0.1):
+    # cria uma copia das instancias e dá um shuffle
+    instancia = np.array(instancia)
+    instancia[:,-1] +=2 
+    instancias_alteradas = instancia[:]
+    
+    while True:
+        #np.random.shuffle(instancias_alteradas)
+        cubao = np.zeros((n_dia, n_sala, max_dia))
+        resultado = []
+
+        n_medicos = max(set(instancias_alteradas[:, -2]))
+        especialidades = np.zeros((n_dia, n_sala))
+        medicos = np.ones((n_medicos, n_dia, max_dia), bool)
+
+        for i in instancias_alteradas:
+            tentativas = max_tentativas
+            duracao = i[-1]
+            especialidade = i[-3]
+            prioridade = i[1]
+            cirurgiao = i[-2] - 1
+            codigo = i[0]
+            c = True
+
+            while tentativas > 0:
+                tentativas -= 1
+                if prioridade == 1:
+                  p = 0.95
+                else:
+                  p = 0.05
+
+                if np.random.rand() < p:
+                  dia = 0
+                else:
+                  dia = np.random.randint(1, n_dia)
+                sala = np.random.randint(n_sala)
+
+                ocupados = sum(cubao[dia, sala, :] > 0)
+                # cabe no dia
+                if ocupados + duracao <= max_dia:
+                    # é da especialidade certa
+                    if (especialidades[dia, sala] == especialidade) or (especialidades[dia, sala] == 0):
+                        # o cirurgiao ta livre
+                        if all(medicos[cirurgiao, dia, ocupados:ocupados+duracao]):
+                            cubao[dia, sala, ocupados:ocupados+duracao] = codigo
+                            medicos[cirurgiao, dia, ocupados:ocupados+duracao] = False
+                            resultado.append([codigo, dia + 1, sala + 1, ocupados])
+                            c = False
+                            if especialidades[dia, sala] == 0:
+                                especialidades[dia, sala] = especialidade
+                            break
+            if c:
+                resultado.append([codigo, n_dia + 1, -1, -1])
+        resultado = np.array(resultado)
+        if sum(resultado[:, 0] == n_dia + 1) / len(resultado) < tol:
+            break
+    return resultado[resultado[:,0].argsort()][:,1:].tolist()
+
+
+def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve = True, Verbose = True, tol_n_alocados_inicial=1e-1):
 
   """ 
       Instance contém a dupla (Data, Max_Rooms)
@@ -109,7 +172,6 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
       params = pop_inicial_total, gen_cuts, cross_params, mutation_params  
       gen_cuts = elite_cut, lucky_cut
       cross_params = Cross_selection, alpha, Cut_type, tournament_size
-      mutation_params =  Mutation_type, prob
       pop_inicial_total = (greedy_pop, random_pop)
 
       Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -130,8 +192,6 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
   Mutation_type, beta    = mutation_params
     
   generations, stop_len, Zt, tol = stop_criteria
-
-  FIX_bool = True
     
   if elite_cut < 1:
     
@@ -149,26 +209,25 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
 
   t0  = time()
   for i in range(random_pop):
-    Xi  = [[np.random.randint(1,6), np.random.randint(1, Max_Rooms+1), np.random.randint(1,46+1)] for j in range(Cs)]
+    Xi  = aloca_cirurgias_random(Data, Max_Rooms, tol=tol_n_alocados_inicial)
 
-    aa, bb = fitness(Xi, Instance, FIX_bool)
-    fit_idx_vector.append([aa, bb])
+    fit_idx_vector.append([fitness(Xi, Instance), Xi])
 
   for i in range(greedy_pop):
     Xi  = aloca_cirurgias(Data,  Max_Rooms)
-    
-    aa, bb = fitness(Xi, Instance, FIX_bool)
-    fit_idx_vector.append([aa, bb])
 
+    fit_idx_vector.append([fitness(Xi, Instance), Xi])
+  
   fit_idx_vector.sort(reverse = True)
+
+  print("Gerou a população inicial")
+
   ancestors, ans_fits = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
   evolution  = [ancestors[:]]
   evo_scores = [ans_fits[:]]
   stop_criteria = [0]*stop_len
-    
   t = time() - t0
-  
-    
+     
   for generation in range(generations):
       t0 = time()
       if Verbose == True:
@@ -198,14 +257,13 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
           mutated_offspring, mut_idxs, nonmut  = mutation(offspring, Instance, beta)
         if generation % 2 == 1:
           mutated_offspring, mut_idxs, nonmut  = mutation_insertion(offspring, Instance, beta)
-        
+      
+    #  print("rec, nonrec, mut, nonmut ", rec_idxs, nonrec, mut_idxs, nonmut)
       fit_idx_vector = [[afit, ancs] for ancs, afit in zip(ancestors, ans_fits)]
-      if generation%10 == 1:
-        FIX_bool = (FIX_bool + 1) % 2
+    
       for midx, mXi in enumerate(mutated_offspring):
         if midx in mut_idxs or midx in rec_idxs:
-          aa, bb = fitness(Xi, Instance, FIX = FIX_bool)
-          fit_idx_vector.append([aa, bb]) 
+          fit_idx_vector.append([fitness(mXi, Instance), mXi])
         else:
           indc = nonrec_dict[midx]
           fit_idx_vector.append([ans_fits[indc], mXi])
@@ -223,9 +281,11 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
       best = L[-1]
         
       stop_criteria[generation%stop_len] = abs(avrg - best) <= tol
+    
       if Target:
         if best < Target:
-            return evolution, evo_scores
+          return evolution, evo_scores
+    
       if sum(stop_criteria) == stop_len:
         
         print(" ")
