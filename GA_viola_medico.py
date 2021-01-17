@@ -1,6 +1,6 @@
 import numpy as np
 
-def viola_medico(instancia,solucao, LIM, FIX = False):
+def viola_medico(instancia,solucao, LIM= 100, FIX = False):
 #Primeiro temos que saber que medico ira fazer cada cirurgia e quanto irá durar
 #SALA - DIA - TO - MEDICO - DURACAO
     solucao_medico = np.array([solucao[i]+instancia[i][4:] for i in range(len(solucao))])
@@ -56,7 +56,7 @@ def sol_fixer(dia, instancia, solucao, LIM = 100):
         for j in cirurgias:
             roomms[j[2]-1].append(j)
             
-        roomms = np.array(roomms)
+        roomms = np.array(roomms, dtype=object)
         
         for room in roomms:
             room = np.array(room)
@@ -65,7 +65,7 @@ def sol_fixer(dia, instancia, solucao, LIM = 100):
             for cn in r:
                 for kk in list(cn[1:-1])+[hours]:
                     new_sol[cn[0]].append(kk)
-                    hours += instancia[cn[0]][-1]
+                hours += instancia[cn[0]][-1]
 
  
         LIM -= 1
@@ -102,18 +102,19 @@ def all_sol_fixer(instancia, solucao):
         for j in cirurgias:
             roomms[j[2]-1].append(j)
             
-        roomms = np.array(roomms)
+        roomms = np.array(roomms, dtype=object)
         
         for room in roomms:
-            
+            hours = 0
             room = np.array(room)
             if len(room) > 0:
                 r = room[room[:,3].argsort()]
-                hours = 0
                 for cn in r:
-                    for kk in list(cn[1:-1])+[hours]:
+                    asddsa = list(cn[1:-1])
+                    asddsa.append(hours)
+                    for kk in asddsa:
                         new_sol[cn[0]].append(kk)
-                        hours += instancia[cn[0]][-1]
+                    hours += instancia[cn[0]][-1]
 
  
         solucao = new_sol

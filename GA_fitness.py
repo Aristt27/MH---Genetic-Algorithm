@@ -92,7 +92,7 @@ def fitness(X, Instance, verbose = False, penalty_check = False, FIX = False):
 
   if Max_Rooms > 2:
     X = all_sol_fixer(Data, X)    # Arruma T0's
-    L, d = viola_medico(Data, X, FIX)
+    L, d = viola_medico(Data, X, FIX = FIX)
     if L == True:
       penalty3 = 1
       if len(d) > 1:
@@ -118,4 +118,4 @@ def fitness(X, Instance, verbose = False, penalty_check = False, FIX = False):
     
   x_val = F_obj(X, Data)
     
-  return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)), X
+  return x_val*(1+ (penalty1 + penalty3+ penalty2)), X
