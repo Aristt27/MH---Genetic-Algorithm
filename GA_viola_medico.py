@@ -60,12 +60,13 @@ def sol_fixer(dia, instancia, solucao, LIM = 100):
         
         for room in roomms:
             room = np.array(room)
-            r = room[room[:,3].argsort()]
             hours = 0
-            for cn in r:
-                for kk in list(cn[1:-1])+[hours]:
-                    new_sol[cn[0]].append(kk)
-                hours += instancia[cn[0]][-1]
+            if len(room) > 0:
+                r = room[room[:,3].argsort()]
+                for cn in r:
+                    for kk in list(cn[1:-1])+[hours]:
+                        new_sol[cn[0]].append(kk)
+                    hours += instancia[cn[0]][-1]
 
  
         LIM -= 1
