@@ -1,14 +1,14 @@
 import numpy as np
 from itertools import groupby
 from Objective_function import funcao_objetivo as F_obj
-from GA_viola_medico import viola_medico, all_sol_fixer
+from GA_viola_medico import viola_medico
 
 def all_equal(iterable):
     " Função que verifica se todos os elementos de uma lista são iguais, BEM RAPIDO"
     g = groupby(iterable)
     return next(g, True) and not next(g, False)
 
-def fitness(X, Instance, verbose = False, penalty_check = False, FIX = False):
+def fitness(X, Instance, verbose = False, penalty_check = False):
 
   """ Aplica a função objetivo e tambem penaliza X caso ocorra o seguinte:
   
@@ -78,29 +78,11 @@ def fitness(X, Instance, verbose = False, penalty_check = False, FIX = False):
     
         if pen_1_weight < 0:    # Horário
           penalty1 += ((pen_1_weight)**2)/2
-        
-  if Max_Rooms < 3:
-    for doc in Docs_pen_3:
-      doc = doc[:5]
-
-    for diazinho in doc:
-      pen_3_weight = 48 - sum(diazinho)
-
-      if pen_3_weight < 0:
-        penalty3 += ((pen_3_weight)**2)/2
-        
-
-  if Max_Rooms > 2:
-    X = all_sol_fixer(Data, X)    # Arruma T0's
-    L, d = viola_medico(Data, X, FIX)
-    if L == True:
-      penalty3 = 1
-      if len(d) > 1:
-        X = d
+    
+  penalty3 = viola_medico(Data,X)
 
   #Verifica se os médicos estão trabalhando em mais de um lugar ao mesmo tempo      
-          
-    
+  
   if penalty_check == True:
         
     if verbose == True:
@@ -118,4 +100,4 @@ def fitness(X, Instance, verbose = False, penalty_check = False, FIX = False):
     
   x_val = F_obj(X, Data)
     
-  return x_val*(1+ ((penalty1) + (penalty3)+ penalty2)), X
+  return x_val * float(1 + 10 * (penalty1 + penalty2 + penalty3))

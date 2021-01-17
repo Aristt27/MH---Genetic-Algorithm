@@ -27,14 +27,22 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
 
   """ Input(Cirurgias): É a solução do problema dada pela forma: X = [[Dia,Sala,T0], ..., [Dia, Sala, T0]]
       Data : É o quadro das informações necessárias para obter valores para as variaveis de decisao e os coeficientes utilizados (A meta é diminuir essa entrada, ao máximo).
+
+
   Lembrete que toda DATA que temos é a matriz na forma:
+
   Cirurgia  k  - Prioridade - Dias_Espera - Especialidade - Cirurgião - Duração(t_c)
+
+
   Função objetiva dada pela fórmula da amanda.
+
   wc = Tempo de Espera;
   d  = dia do agendamento;
   xi_p = fator de penalidade (en função da prioridade) para o não agendamento na semana;
   l_p = prazo limite de atendimento (dias) (em função da prioridade);
+
   Observe que para a FO, não importa o tempo que a cirurgia foi marcada...
+
   Variaveis de decisão::
   x_cstd:  Cirurgia, prioridade agendada na semana no tempo t;
   z_c   :  Cirurgia não agendada na semana
@@ -43,7 +51,7 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
   
   """
 
-  objective = 0.
+  objective = 0
 
   for idx, cirurgia in enumerate(Cirurgias):
 
@@ -62,16 +70,17 @@ def funcao_objetivo(Cirurgias, Data, PenaltyTable = DefaultTable):
 
       objective += (xi_p)*((w_c + 7))**2 
       
-      if d_p + w_c > l_p: #Caso a cirurgia tenha vencido
+      if w_c > l_p: #Caso a cirurgia tenha vencido (w_c +7?)
         
         objective += (xi_p)*(w_c + 9 - l_p)**2 
 
-    if True: #Caso a cirurgia tenha sido marcada
+    else: #Caso a cirurgia tenha sido marcada
 
       objective += (w_c + 2 + d_p)**2
                     
       if d_p + w_c > l_p:  #Caso a cirurgia estiver vencida
 
         objective += (w_c + 2 + d_p - l_p)**2
-
+        
   return objective
+  

@@ -120,22 +120,13 @@ def aloca_cirurgias_random(instancia,  n_sala, n_dia = 5, max_dia = 48, max_tent
             tentativas = max_tentativas
             duracao = i[-1]
             especialidade = i[-3]
-            prioridade = i[1]
             cirurgiao = i[-2] - 1
             codigo = i[0]
             c = True
 
             while tentativas > 0:
                 tentativas -= 1
-                if prioridade == 1:
-                  p = 0.95
-                else:
-                  p = 0.05
-
-                if np.random.rand() < p:
-                  dia = 0
-                else:
-                  dia = np.random.randint(1, n_dia)
+                dia = np.random.randint(n_dia)
                 sala = np.random.randint(n_sala)
 
                 ocupados = sum(cubao[dia, sala, :] > 0)
