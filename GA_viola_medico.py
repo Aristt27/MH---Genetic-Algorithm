@@ -20,7 +20,7 @@ def viola_medico(instancia, solucao, n_dias=5, n_horarios=48):
         if dia <= n_dias:
             cubao[medico-1, dia-1, comeco:comeco+duracao] += 1
 
-    return (cubao > 1).sum()
+    return (cubao > 1).sum(), ((cubao > 0).sum(2) > 26).sum()
 
 def all_sol_fixer(instancia, solucao):
 
@@ -68,5 +68,3 @@ def all_sol_fixer(instancia, solucao):
         solucao = new_sol
     
     return new_sol
-        
-        
