@@ -3,7 +3,6 @@ import numpy as np
 from GA_fitness import fitness
 from GA_crossover import crossover, crossover_tournament
 from GA_mutation import mutation, mutation_insertion
-from GA_viola_medico import viola_medico
 
 from random import sample
 from time import time
@@ -110,6 +109,7 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
       params = pop_inicial_total, gen_cuts, cross_params, mutation_params  
       gen_cuts = elite_cut, lucky_cut
       cross_params = Cross_selection, alpha, Cut_type, tournament_size
+      mutation_params =  Mutation_type, prob
       pop_inicial_total = (greedy_pop, random_pop)
 
       Cut_type = "ONE_CUT" or "MULTI_CUT"
@@ -130,6 +130,8 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
   Mutation_type, beta    = mutation_params
     
   generations, stop_len, Zt, tol = stop_criteria
+
+  FIX_bool = True
     
   if elite_cut < 1:
     
@@ -149,21 +151,24 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
   for i in range(random_pop):
     Xi  = [[np.random.randint(1,6), np.random.randint(1, Max_Rooms+1), np.random.randint(1,46+1)] for j in range(Cs)]
 
-    fit_idx_vector.append([fitness(Xi, Instance), Xi])
+    aa, bb = fitness(Xi, Instance, FIX_bool)
+    fit_idx_vector.append([aa, bb])
 
   for i in range(greedy_pop):
     Xi  = aloca_cirurgias(Data,  Max_Rooms)
-
-    fit_idx_vector.append([fitness(Xi, Instance), Xi])
+    
+    aa, bb = fitness(Xi, Instance, FIX_bool)
+    fit_idx_vector.append([aa, bb])
 
   fit_idx_vector.sort(reverse = True)
-    
   ancestors, ans_fits = select_ancestors(fit_idx_vector, elite_cut, lucky_cut)
   evolution  = [ancestors[:]]
   evo_scores = [ans_fits[:]]
   stop_criteria = [0]*stop_len
+    
   t = time() - t0
-     
+  
+    
   for generation in range(generations):
       t0 = time()
       if Verbose == True:
@@ -193,13 +198,14 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
           mutated_offspring, mut_idxs, nonmut  = mutation(offspring, Instance, beta)
         if generation % 2 == 1:
           mutated_offspring, mut_idxs, nonmut  = mutation_insertion(offspring, Instance, beta)
-      
-    #  print("rec, nonrec, mut, nonmut ", rec_idxs, nonrec, mut_idxs, nonmut)
+        
       fit_idx_vector = [[afit, ancs] for ancs, afit in zip(ancestors, ans_fits)]
-    
+      if generation%10 == 1:
+        FIX_bool = (FIX_bool + 1) % 2
       for midx, mXi in enumerate(mutated_offspring):
         if midx in mut_idxs or midx in rec_idxs:
-          fit_idx_vector.append([fitness(mXi, Instance), mXi])
+          aa, bb = fitness(Xi, Instance, FIX = FIX_bool)
+          fit_idx_vector.append([aa, bb]) 
         else:
           indc = nonrec_dict[midx]
           fit_idx_vector.append([ans_fits[indc], mXi])
@@ -217,11 +223,9 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
       best = L[-1]
         
       stop_criteria[generation%stop_len] = abs(avrg - best) <= tol
-    
       if Target:
         if best < Target:
-          return evolution, evo_scores
-    
+            return evolution, evo_scores
       if sum(stop_criteria) == stop_len:
         
         print(" ")
