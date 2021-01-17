@@ -182,8 +182,8 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
 
   pop_inicial_total, gen_cuts, cross_params, mutation_params = params  # params assessment  (Max_Rooms é o número de salas).
 
-  greedy_pop, random_pop = pop_inicial_total
-  pop_inicial            = greedy_pop + random_pop
+  greedy_pop, greedy_pop2, random_pop  = pop_inicial_total
+  pop_inicial            = greedy_pop + random_pop + greedy_pop2
 
   elite_cut, lucky_cut   = gen_cuts
     
@@ -208,7 +208,11 @@ def Genetic_Algorithm(Instance, params, stop_criteria, Target = False, Presolve 
   fit_idx_vector = []
 
   t0  = time()
+
   for i in range(random_pop):
+    Xi  = [[np.random.randint(1,7), np.random.randint(1, Max_Rooms+1), np.random.randint(1,3)] for j in range(Cs)]
+    
+  for i in range(greedy_pop2):
     Xi  = aloca_cirurgias_random(Data, Max_Rooms, tol=tol_n_alocados_inicial)
 
     fit_idx_vector.append([fitness(Xi, Instance), Xi])
