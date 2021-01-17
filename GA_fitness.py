@@ -97,8 +97,11 @@ def fitness(X, Instance, verbose = False, penalty_check = False):
 
       if penalty3:
         print("Essa solução possui uma disposição impossivel para algum cirurgião")
+
+      if penalty4:
+        print("Essa solução possui algum cirurgião trabalhando mais que 26 tempos em um dia")
         
-      return penalty1, penalty2, penalty3
+      return penalty1, penalty2, penalty3, penalty4
     
   x_val = F_obj(X, Data)
     
