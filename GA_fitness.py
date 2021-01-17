@@ -105,4 +105,4 @@ def fitness(X, Instance, verbose = False, penalty_check = False):
     
   x_val = F_obj(X, Data)
     
-  return x_val * float(1 + 10 * (penalty1 + penalty2 + penalty3 + penalty4))
+  return x_val * float(1 + 10 * (penalty1 + penalty2 + penalty3 + penalty4)), X
